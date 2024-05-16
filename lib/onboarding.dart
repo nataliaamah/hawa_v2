@@ -59,13 +59,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           onPageChanged: _handlePageViewChanged,
           children: [
             buildOnboardingOne(context),
-            Text('Testing'),
+            buildOnboardingTwo(context),
             // Add other onboarding pages here
           ],
         ),
         if (_currentPageIndex == 3) // assuming the last page index is 3
           ElevatedButton(
-            onPressed: widget.onCompleted, // Invoke the onCompleted callback
+            onPressed: widget.onCompleted, 
             child: Text('Complete Onboarding'),
           ),
       ],
@@ -105,8 +105,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Spacer(flex: 32),
-          Image.asset('assets/images/1.png', height: 300, width: 400),
+          Spacer(flex: 10),
+          Image.asset('assets/images/hawa_logo.png', height: 300, width: 400),
           Text(
             "Your Guardian in Times of Need",
             style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400,),
@@ -119,11 +119,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               activeIndex: 0,
               count: 2,
               effect: ScrollingDotsEffect(
-                activeDotColor: Color(0X1212121D),
-                dotHeight: 30,
+                activeDotColor: Color(0xFF9CE1CF),
+                dotHeight: 15,
               ),
             ),
           ),
+          
+          
         ],
       ),
     ),
@@ -138,14 +140,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Spacer(),
+            Spacer(flex: 1),
             Text(
               "Share Your Location",
-              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400,),
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400),
             ),
-            SizedBox(height : 30),
-            Image.asset('assets/images/1.png', height : 300, width: 300,),
-            
+            SizedBox(height: 10),
+            Image.asset('assets/images/location_onboard.png', height: 200, width: 200),
+            SizedBox(height:10),
+            Text(
+              "Share your location to emergency contact.",
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400),
+            ),
+            Spacer(flex: 2),
+            SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20), // Adjust padding as needed
+              child: SizedBox(
+                height: 10,
+                child: AnimatedSmoothIndicator(
+                  activeIndex: 1,
+                  count: 2,
+                  effect: ScrollingDotsEffect(
+                    activeDotColor: Color(0xFF9CE1CF),
+                    dotHeight: 15,
+                  ),
+                ),
+              ),
+            ),
           ]
         )
       ),
