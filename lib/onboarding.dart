@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:hawa_v1/login_page.dart';
 
 class Onboarding extends StatelessWidget {
   final VoidCallback onCompleted;
@@ -354,7 +355,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
       else
         TextButton(
           onPressed: () {
-            
+            Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => LoginPage()),
+          );
           },
           child: Text('Done', style: TextStyle(fontSize: 18, fontFamily: "Roboto", fontWeight: FontWeight.w400, color: Color.fromRGBO(255, 255, 255, 1))),
           style: TextButton.styleFrom(

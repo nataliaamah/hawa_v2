@@ -6,9 +6,9 @@ import 'package:hawa_v1/onboarding.dart';
 import 'package:hawa_v1/home_page.dart';
 import 'package:hawa_v1/login_page.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   SharedPreferences prefs = await SharedPreferences.getInstance();
   bool seenOnboard = prefs.getBool('seenOnboard') ?? false;
   runApp(HawaApp(seenOnboard: seenOnboard));

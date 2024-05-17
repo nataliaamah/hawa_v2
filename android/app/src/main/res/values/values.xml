@@ -1,0 +1,9 @@
+<resources>
+    <string name="firebase_database_url" translatable="false">https://hawa-24.firebaseio.com</string>
+    <string name="gcm_defaultSenderId" translatable="false">412192301224</string>
+    <string name="google_api_key" translatable="false">AIzaSyBI4sUEiu_uXYlDCRreSnsMC9oZGsT0D8c</string>
+    <string name="google_app_id" translatable="false">1:412192301224:android:8f0dde3e43b709131c229d</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyBI4sUEiu_uXYlDCRreSnsMC9oZGsT0D8c</string>
+    <string name="google_storage_bucket" translatable="false">hawa-24.appspot.com</string>
+    <string name="project_id" translatable="false">hawa-24</string>
+</resources>
