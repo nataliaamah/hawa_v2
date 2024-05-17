@@ -65,10 +65,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             // Add other onboarding pages here
           ],
         ),
-        if (_currentPageIndex < 4)
-          _rightButton()
-        else if (_currentPageIndex > 0)
-          _leftButton()
+        _navigationButtons(),
         /*if (_currentPageIndex == 4) // assuming the last page index is 3
           ElevatedButton(
             onPressed: widget.onCompleted, 
@@ -119,9 +116,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           ),
           Spacer(flex: 37),
           SizedBox(height: 30),
-          SizedBox(
-            height: 40,
-            child: SmoothPageIndicator(
+          Padding(
+              padding: const EdgeInsets.only(bottom: 30), // Adjust padding as needed
+              child: SizedBox(
+                height: 10,
+                child: SmoothPageIndicator(
                   controller : _pageViewController,
                   count: 4,
                   effect: WormEffect(
@@ -129,8 +128,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                     dotHeight: 10,
                     dotWidth: 10,
                   ),
+                ),
+              ),
             ),
-          ),
         ],
       ),
     ),
@@ -156,12 +156,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             SizedBox(height:10),
             Text(
               "Hawa allows you to share your current location with trusted contacts from the app.",
-              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400),
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400, fontSize: 15),
             ),
             Spacer(flex: 2),
             SizedBox(height: 20),
             Padding(
-              padding: const EdgeInsets.only(bottom: 20), // Adjust padding as needed
+              padding: const EdgeInsets.only(bottom: 30), // Adjust padding as needed
               child: SizedBox(
                 height: 10,
                 child: SmoothPageIndicator(
@@ -199,12 +199,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             SizedBox(height:10),
             Text(
               "Share images of your surroundings to your designated emergency contact.",
-              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400),
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400, fontSize: 15),
             ),
             Spacer(flex: 2),
             SizedBox(height: 20),
             Padding(
-              padding: const EdgeInsets.only(bottom: 20), // Adjust padding as needed
+              padding: const EdgeInsets.only(bottom: 30), // Adjust padding as needed
               child: SizedBox(
                 height: 10,
                 child: SmoothPageIndicator(
@@ -242,12 +242,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             SizedBox(height:10),
             Text(
               "Initiate a call to your emergency contact directly from the app, ensuring quick access to assistance in times of distress.",
-              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400),
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400, fontSize: 15),
             ),
             Spacer(flex: 2),
             SizedBox(height: 20),
             Padding(
-              padding: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.only(bottom: 30),
               child: SizedBox(
                 height: 10,
                 child: SmoothPageIndicator(
@@ -293,27 +293,74 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
   }
   
   // arrow next
-  Row _rightButton() {
+  Row _navigationButtons() {
   return Row(
-    mainAxisAlignment: MainAxisAlignment.center,
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      GestureDetector(
-        onTap: () {
-          setState(() {
-            if(_currentPageIndex < 4)
-              _currentPageIndex += 1;
-          });
-          _pageViewController.animateToPage(
-            _currentPageIndex,
-            duration: Duration(milliseconds: 300), // Sets duration to 300 milliseconds
-            curve: Curves.easeInOut);
-        },
-        child: 
-        Padding(
-          padding: EdgeInsets.only(bottom: 60, left:250),
-          child: Image.asset('assets/images/nextArrow.png', height: 30, width: 30,),
+      // Only show 'Previous' button if currentPageIndex is greater than 0
+      if (_currentPageIndex > 0)
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _currentPageIndex -= 1;
+            });
+            _pageViewController.animateToPage(
+              _currentPageIndex,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeInOut
+            );
+          },
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 60, horizontal: 50),
+            child: Image.asset('assets/images/backArrow.png', height: 30, width: 30),
           )
-      ),
+        ),
+      
+      // Show 'Next' or 'Done' button based on currentPageIndex
+      if (_currentPageIndex == 0)
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _currentPageIndex += 1;
+            });
+            _pageViewController.animateToPage(
+              _currentPageIndex,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeInOut
+            );
+          },
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 60, left: 313),
+            child: Image.asset('assets/images/nextArrow.png', height: 30, width: 30),
+          )
+        )
+      else if (_currentPageIndex < 3)
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _currentPageIndex += 1;
+            });
+            _pageViewController.animateToPage(
+              _currentPageIndex,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeInOut
+            );
+          },
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 60, horizontal: 50),
+            child: Image.asset('assets/images/nextArrow.png', height: 30, width: 30),
+          )
+        )
+      else
+        TextButton(
+          onPressed: () {
+            
+          },
+          child: Text('Done', style: TextStyle(fontSize: 18, fontFamily: "Roboto", fontWeight: FontWeight.w400, color: Color.fromRGBO(255, 255, 255, 1))),
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(vertical: 60, horizontal:50),
+          ),
+        ),
     ],
   );
 }
