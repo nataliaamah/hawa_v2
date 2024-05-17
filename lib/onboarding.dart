@@ -60,14 +60,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           children: [
             buildOnboardingOne(context),
             buildOnboardingTwo(context),
+            buildOnboardingThree(context),
+            buildOnboardingFour(context),
             // Add other onboarding pages here
           ],
         ),
-        if (_currentPageIndex == 3) // assuming the last page index is 3
+        if (_currentPageIndex < 4)
+          _rightButton()
+        else if (_currentPageIndex > 0)
+          _leftButton()
+        /*if (_currentPageIndex == 4) // assuming the last page index is 3
           ElevatedButton(
             onPressed: widget.onCompleted, 
             child: Text('Complete Onboarding'),
-          ),
+          ),*/
       ],
     );
   }
@@ -96,7 +102,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     }
   }
 
-// build page 1
+// first onboarding
   Widget buildOnboardingOne(BuildContext context) {
     return SafeArea(
     child: Container(
@@ -109,29 +115,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           Image.asset('assets/images/hawa_logo.png', height: 300, width: 400),
           Text(
             "Your Guardian in Times of Need",
-            style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400,),
+            style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 18),
           ),
           Spacer(flex: 37),
           SizedBox(height: 30),
           SizedBox(
             height: 40,
-            child: AnimatedSmoothIndicator(
-              activeIndex: 0,
-              count: 2,
-              effect: ScrollingDotsEffect(
-                activeDotColor: Color(0xFF9CE1CF),
-                dotHeight: 15,
-              ),
+            child: SmoothPageIndicator(
+                  controller : _pageViewController,
+                  count: 4,
+                  effect: WormEffect(
+                    activeDotColor: Color(0xFF9CE1CF),
+                    dotHeight: 10,
+                    dotWidth: 10,
+                  ),
             ),
           ),
-          
-          
         ],
       ),
     ),
   );
   }
 
+  // second onboarding
   Widget buildOnboardingTwo(BuildContext context){
     return SafeArea(
       child: Container(
@@ -143,13 +149,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             Spacer(flex: 1),
             Text(
               "Share Your Location",
-              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400),
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 18),
             ),
             SizedBox(height: 10),
             Image.asset('assets/images/location_onboard.png', height: 200, width: 200),
             SizedBox(height:10),
             Text(
-              "Share your location to emergency contact.",
+              "Hawa allows you to share your current location with trusted contacts from the app.",
               style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400),
             ),
             Spacer(flex: 2),
@@ -158,12 +164,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               padding: const EdgeInsets.only(bottom: 20), // Adjust padding as needed
               child: SizedBox(
                 height: 10,
-                child: AnimatedSmoothIndicator(
-                  activeIndex: 1,
-                  count: 2,
-                  effect: ScrollingDotsEffect(
+                child: SmoothPageIndicator(
+                  controller : _pageViewController,
+                  count: 4,
+                  effect: WormEffect(
                     activeDotColor: Color(0xFF9CE1CF),
-                    dotHeight: 15,
+                    dotHeight: 10,
+                    dotWidth: 10,
                   ),
                 ),
               ),
@@ -173,6 +180,142 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
       ),
       );
   }
-}
 
+  Widget buildOnboardingThree(BuildContext context){
+    return SafeArea(
+      child: Container(
+        width: double.maxFinite,
+        padding: EdgeInsets.symmetric(horizontal: 51, vertical: 92),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Spacer(flex: 1),
+            Text(
+              "Capture Your Surroundings",
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 18),
+            ),
+            SizedBox(height: 10),
+            Image.asset('assets/images/snap_onboard.png', height: 200, width: 200),
+            SizedBox(height:10),
+            Text(
+              "Share images of your surroundings to your designated emergency contact.",
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400),
+            ),
+            Spacer(flex: 2),
+            SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20), // Adjust padding as needed
+              child: SizedBox(
+                height: 10,
+                child: SmoothPageIndicator(
+                  controller : _pageViewController,
+                  count: 4,
+                  effect: WormEffect(
+                    activeDotColor: Color(0xFF9CE1CF),
+                    dotHeight: 10,
+                    dotWidth: 10,
+                  ),
+                ),
+              ),
+            ),
+          ]
+        )
+      ),
+      );
+  }
+
+  Widget buildOnboardingFour(BuildContext context){
+    return SafeArea(
+      child: Container(
+        width: double.maxFinite,
+        padding: EdgeInsets.symmetric(horizontal: 51, vertical: 92),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Spacer(flex: 1),
+            Text(
+              "Emergency Calls",
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 18),
+            ),
+            SizedBox(height: 10),
+            Image.asset('assets/images/emergency_onboard.png', height: 200, width: 200),
+            SizedBox(height:10),
+            Text(
+              "Initiate a call to your emergency contact directly from the app, ensuring quick access to assistance in times of distress.",
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400),
+            ),
+            Spacer(flex: 2),
+            SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: SizedBox(
+                height: 10,
+                child: SmoothPageIndicator(
+                  controller : _pageViewController,
+                  count: 4,
+                  effect: WormEffect(
+                    activeDotColor: Color(0xFF9CE1CF),
+                    dotHeight: 10,
+                    dotWidth: 10,
+                  ),
+                ),
+              ),
+            ),
+          ]
+        )
+      ),
+      );
+  }
+
+  
+  Row _leftButton() {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      GestureDetector(
+        onTap: () {
+          setState(() {
+              _currentPageIndex -= 1;
+          });
+          _pageViewController.animateToPage(
+            _currentPageIndex,
+            duration: Duration(milliseconds: 300), // Sets duration to 300 milliseconds
+            curve: Curves.easeInOut);
+        },
+        child: 
+        Padding(
+          padding: EdgeInsets.only(bottom: 60, left:50),
+          child: Image.asset('assets/images/nextArrow.png', height: 30, width: 30,),
+          )
+      ),
+    ],
+  );
+  }
+  
+  // arrow next
+  Row _rightButton() {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      GestureDetector(
+        onTap: () {
+          setState(() {
+            if(_currentPageIndex < 4)
+              _currentPageIndex += 1;
+          });
+          _pageViewController.animateToPage(
+            _currentPageIndex,
+            duration: Duration(milliseconds: 300), // Sets duration to 300 milliseconds
+            curve: Curves.easeInOut);
+        },
+        child: 
+        Padding(
+          padding: EdgeInsets.only(bottom: 60, left:250),
+          child: Image.asset('assets/images/nextArrow.png', height: 30, width: 30,),
+          )
+      ),
+    ],
+  );
+}
+}
 

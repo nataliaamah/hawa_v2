@@ -26,6 +26,10 @@ flutter:
   assets:
     - assets/images/hawa_logo.png
     - assets/images/location_onboard.png
+    - assets/images/snap_onboard.png
+    - assets/images/emergency_onboard.png
+    - assets/images/nextArrow.png
+    - assets/images/backArrow.png
   fonts:
     - family : Roboto
       fonts:
