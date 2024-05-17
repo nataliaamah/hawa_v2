@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
 import 'package:hawa_v1/home_page.dart';
 
 TextEditingController emailController = TextEditingController();
@@ -15,35 +16,47 @@ class _LoginPageState extends State<LoginPage> {
   String errorMessage = '';
 
   Future<void> signIn() async {
-    try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: emailController.text,
-        password: passwordController.text,
-      );
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage(title: "Home Page")),
-      );
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        setState(() {
+  try {
+    UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      email: emailController.text,
+      password: passwordController.text,
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => HomePage(title: "Home Page")),
+    );
+  } on FirebaseAuthException catch (e) {
+    setState(() {
+      switch (e.code) {
+        case 'user-not-found':
           errorMessage = 'No user found for that email.';
-        });
-      } else if (e.code == 'wrong-password') {
-        setState(() {
+          break;
+        case 'wrong-password':
           errorMessage = 'Wrong password provided for that user.';
-        });
-      } else {
-        setState(() {
-          errorMessage = 'An unknown error occurred.';
-        });
+          break;
+        case 'invalid-email':
+          errorMessage = 'The email address is badly formatted.';
+          break;
+        case 'user-disabled':
+          errorMessage = 'The user account has been disabled.';
+          break;
+        case 'too-many-requests':
+          errorMessage = 'Too many requests. Try again later.';
+          break;
+        case 'invalid-credential':
+          errorMessage = "Incorrect email or password";
+          break;
+        default:
+          errorMessage = 'An unknown error occurred: ${e.message}';
       }
-    } catch (e) {
-      setState(() {
-        errorMessage = 'An error occurred. Please try again.';
-      });
-    }
+    });
+  } catch (e) {
+    print("General exception: ${e.toString()}");
+    setState(() {
+      errorMessage = 'An error occurred. Please try again. ${e.toString()}';
+    });
   }
+}
 
   void navigateToSignUp() {
     Navigator.push(
@@ -63,30 +76,27 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(height: 50.0),
+              SizedBox(height: 30.0),
               Align(
                 alignment: Alignment.centerLeft,
                 child: SizedBox(
-                  width: 200.0,
+                  width: 300.0,
                   child: RichText(
                     text: TextSpan(
                       children: [
-                        TextSpan(
-                          text: "Login\n",
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 24.0,
-                            color: Color.fromRGBO(255, 255, 255, 1),
+                        WidgetSpan(
+                          child : Padding(
+                            padding:EdgeInsets.only(left: 50, bottom: 0),
+                            child :
+                              Text( "Login\n", style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 30.0, color: Color.fromRGBO(255, 255, 255, 1),)
+                            )
+                            ),
                           ),
-                        ),
-                        TextSpan(
-                          text: "Login to continue using the application",
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontWeight: FontWeight.w300,
-                            fontSize: 14.0,
-                            color: Color.fromRGBO(255, 255, 255, 1),
+                        WidgetSpan(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 50, top: 0),
+                            child: Text("Login to continue using the application", style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w300, fontSize: 14.0, color: Color.fromRGBO(255, 255, 255, 1),)
+                          )
                           ),
                         ),
                       ],
@@ -95,72 +105,66 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 20.0),
+              SizedBox(height: 15.0),
               _buildEmailSection(context),
-              SizedBox(height: 20.0),
+              SizedBox(height: 5.0),
               _buildPasswordSection(context),
-              SizedBox(height: 20.0),
+              SizedBox(height: 30.0),
               if (errorMessage.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
+                  padding: const EdgeInsets.only(bottom: 10.0, left: 50, right: 35),
                   child: Text(
                     errorMessage,
                     style: TextStyle(color: Colors.red),
                   ),
                 ),
               GestureDetector(
-                onTap: signIn,
-                child: Text(
-                  "Sign in",
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w300,
-                    fontSize: 13,
-                    decoration: TextDecoration.underline,
-                    color: Color.fromRGBO(255, 255, 255, 1),
-                  ),
-                ),
-              ),
-              GestureDetector(
                 onTap: navigateToSignUp,
                 child: Text(
-                  "Sign up",
+                  "Sign Up",
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontWeight: FontWeight.w300,
-                    fontSize: 13,
+                    fontSize: 14,
                     decoration: TextDecoration.underline,
-                    color: Color.fromRGBO(168, 179, 248, 1),
+                    decorationColor: Color.fromRGBO(198, 205, 250, 1),
+                    color: Color.fromRGBO(198, 205, 250, 1),
                   ),
                 ),
               ),
               Spacer(),
               Container(
                 width: 250.0,
+                decoration: BoxDecoration(
+                  color: Color(0xFF9CE1CF), 
+                  borderRadius: BorderRadius.circular(8.0),
+                  border: Border.all(color: Color.fromARGB(255, 122, 185, 168)), 
+                ),
                 child: OutlinedButton(
                   onPressed: signIn,
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    side: BorderSide(color: Colors.transparent), 
+                  ),
                   child: Text(
                     "Login",
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontWeight: FontWeight.w700,
                       fontSize: 16.0,
-                      color: Color.fromRGBO(255, 255, 255, 1),
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Color.fromRGBO(255, 255, 255, 1)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
+                      color: Color.fromRGBO(37, 37, 37, 1), 
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ]
+            ),
+        )
         ),
-      ),
-    );
+      );
+    }
   }
 
   Widget _buildEmailSection(BuildContext context) {
@@ -174,7 +178,7 @@ class _LoginPageState extends State<LoginPage> {
         SizedBox(height: 10.0),
         _buildTextFormField(
           controller: emailController,
-          hintText: "Enter your email",
+          hintText: "Enter email",
           obscureText: false,
         ),
       ],
@@ -192,7 +196,7 @@ class _LoginPageState extends State<LoginPage> {
         SizedBox(height: 10.0),
         _buildTextFormField(
           controller: passwordController,
-          hintText: "Enter your password",
+          hintText: "Enter password",
           obscureText: true,
         ),
       ],
@@ -211,7 +215,9 @@ class _LoginPageState extends State<LoginPage> {
         obscureText: obscureText,
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: TextStyle(color: Colors.grey),
+          hintStyle:TextStyle(color:Color.fromRGBO(127, 127, 127, 1), fontFamily: 'Roboto', fontWeight: FontWeight.w300),
+          filled: true,
+          fillColor: Color.fromRGBO(255, 255, 255, 1),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
             borderSide: BorderSide(color: Colors.grey),
@@ -225,4 +231,3 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-}

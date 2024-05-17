@@ -360,7 +360,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             MaterialPageRoute(builder: (context) => LoginPage()),
           );
           },
-          child: Text('Done', style: TextStyle(fontSize: 18, fontFamily: "Roboto", fontWeight: FontWeight.w400, color: Color.fromRGBO(255, 255, 255, 1))),
+          child: Text('Next', style: TextStyle(fontSize: 18, fontFamily: "Roboto", fontWeight: FontWeight.w400, color: Color.fromRGBO(255, 255, 255, 1))),
           style: TextButton.styleFrom(
             padding: EdgeInsets.symmetric(vertical: 60, horizontal:50),
           ),
