@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hawa_v1/home_page.dart';
+import 'package:hawa_v1/signup_page.dart';
 
 TextEditingController emailController = TextEditingController();
 TextEditingController passwordController = TextEditingController();
@@ -61,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
   void navigateToSignUp() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => LoginPage()), // Change to sign up page later
+      MaterialPageRoute(builder: (context) => SignUp()), // Change to sign up page later
     );
   }
 
