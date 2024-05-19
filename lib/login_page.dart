@@ -138,14 +138,14 @@ class _LoginPageState extends State<LoginPage> {
                 width: 250.0,
                 decoration: BoxDecoration(
                   color: Color(0xFF9CE1CF), 
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(40),
                   border: Border.all(color: Color.fromARGB(255, 122, 185, 168)), 
                 ),
                 child: OutlinedButton(
                   onPressed: signIn,
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     side: BorderSide(color: Colors.transparent), 
                   ),
