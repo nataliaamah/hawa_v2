@@ -67,11 +67,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           ],
         ),
         _navigationButtons(),
-        /*if (_currentPageIndex == 4) // assuming the last page index is 3
-          ElevatedButton(
-            onPressed: widget.onCompleted, 
-            child: Text('Complete Onboarding'),
-          ),*/
       ],
     );
   }
@@ -112,8 +107,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           Spacer(flex: 10),
           Image.asset('assets/images/hawa_logo.png', height: 300, width: 400),
           Text(
-            "Your Guardian in Times of Need",
-            style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 18),
+            "Your Guardian in\n Times of Need",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 24,),
           ),
           Spacer(flex: 37),
           SizedBox(height: 30),
@@ -124,7 +120,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 child: SmoothPageIndicator(
                   controller : _pageViewController,
                   count: 4,
-                  effect: WormEffect(
+                  effect: ExpandingDotsEffect(
                     activeDotColor: Color(0xFF9CE1CF),
                     dotHeight: 10,
                     dotWidth: 10,
@@ -168,7 +164,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 child: SmoothPageIndicator(
                   controller : _pageViewController,
                   count: 4,
-                  effect: WormEffect(
+                  effect: ExpandingDotsEffect(
                     activeDotColor: Color(0xFF9CE1CF),
                     dotHeight: 10,
                     dotWidth: 10,
@@ -211,7 +207,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 child: SmoothPageIndicator(
                   controller : _pageViewController,
                   count: 4,
-                  effect: WormEffect(
+                  effect: ExpandingDotsEffect(
                     activeDotColor: Color(0xFF9CE1CF),
                     dotHeight: 10,
                     dotWidth: 10,
@@ -254,7 +250,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 child: SmoothPageIndicator(
                   controller : _pageViewController,
                   count: 4,
-                  effect: WormEffect(
+                  effect: ExpandingDotsEffect(
                     activeDotColor: Color(0xFF9CE1CF),
                     dotHeight: 10,
                     dotWidth: 10,
@@ -280,7 +276,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           });
           _pageViewController.animateToPage(
             _currentPageIndex,
-            duration: Duration(milliseconds: 300), // Sets duration to 300 milliseconds
+            duration: Duration(milliseconds: 250), // Sets duration to 300 milliseconds
             curve: Curves.easeInOut);
         },
         child: 
@@ -307,7 +303,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             });
             _pageViewController.animateToPage(
               _currentPageIndex,
-              duration: Duration(milliseconds: 300),
+              duration: Duration(milliseconds: 250),
               curve: Curves.easeInOut
             );
           },
@@ -326,7 +322,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             });
             _pageViewController.animateToPage(
               _currentPageIndex,
-              duration: Duration(milliseconds: 300),
+              duration: Duration(milliseconds: 250),
               curve: Curves.easeInOut
             );
           },
@@ -343,7 +339,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             });
             _pageViewController.animateToPage(
               _currentPageIndex,
-              duration: Duration(milliseconds: 300),
+              duration: Duration(milliseconds: 250),
               curve: Curves.easeInOut
             );
           },

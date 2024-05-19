@@ -122,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
               GestureDetector(
                 onTap: navigateToSignUp,
                 child: Text(
-                  "Sign Up",
+                  "Create an account",
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontWeight: FontWeight.w300,
