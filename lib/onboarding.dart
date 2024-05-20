@@ -144,16 +144,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Spacer(flex: 1),
+            Image.asset('assets/images/location_onboard.png', height: 300, width: 300),
+            SizedBox(height: 10),
             Text(
               "Share Your Location",
-              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 18),
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 23),
             ),
-            SizedBox(height: 10),
-            Image.asset('assets/images/location_onboard.png', height: 200, width: 200),
             SizedBox(height:10),
             Text(
               "Hawa allows you to share your current location with trusted contacts from the app.",
               style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400, fontSize: 15),
+              textAlign: TextAlign.center,
             ),
             Spacer(flex: 2),
             SizedBox(height: 20),
@@ -187,16 +188,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Spacer(flex: 1),
+            Image.asset('assets/images/snap_onboard.png', height: 300, width: 300),
+            SizedBox(height: 10),
             Text(
               "Capture Your Surroundings",
-              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 18),
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 23),
+              textAlign: TextAlign.center,
             ),
-            SizedBox(height: 10),
-            Image.asset('assets/images/snap_onboard.png', height: 200, width: 200),
             SizedBox(height:10),
             Text(
               "Share images of your surroundings to your designated emergency contact.",
               style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400, fontSize: 15),
+              textAlign: TextAlign.center,
             ),
             Spacer(flex: 2),
             SizedBox(height: 20),
@@ -224,27 +227,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
   Widget buildOnboardingFour(BuildContext context){
     return SafeArea(
       child: Container(
+        color: Color(0xFF28112B),
         width: double.maxFinite,
         padding: EdgeInsets.symmetric(horizontal: 51, vertical: 92),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Spacer(flex: 1),
+            Image.asset('assets/images/emergency_onboard.png', height: 300, width: 300),
+            SizedBox(height: 10),
             Text(
               "Emergency Calls",
-              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 18),
+              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 23),
             ),
-            SizedBox(height: 10),
-            Image.asset('assets/images/emergency_onboard.png', height: 200, width: 200),
             SizedBox(height:10),
             Text(
               "Initiate a call to your emergency contact directly from the app, ensuring quick access to assistance in times of distress.",
               style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400, fontSize: 15),
+              textAlign: TextAlign.center,
             ),
             Spacer(flex: 2),
             SizedBox(height: 20),
             Padding(
-              padding: const EdgeInsets.only(bottom: 30),
+              padding: const EdgeInsets.only(bottom: 30), 
               child: SizedBox(
                 height: 10,
                 child: SmoothPageIndicator(

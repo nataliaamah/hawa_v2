@@ -77,7 +77,6 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(height: 30.0),
               Align(
                 alignment: Alignment.centerLeft,
                 child: SizedBox(
@@ -106,36 +105,20 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 15.0),
+              SizedBox(height: 10.0),
               _buildEmailSection(context),
-              SizedBox(height: 5.0),
               _buildPasswordSection(context),
               SizedBox(height: 30.0),
               if (errorMessage.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0, left: 50, right: 35),
+              Padding(
+                  padding: const EdgeInsets.only(bottom: 20.0, left: 50, right: 35),
                   child: Text(
                     errorMessage,
                     style: TextStyle(color: Colors.red),
                   ),
                 ),
-              GestureDetector(
-                onTap: navigateToSignUp,
-                child: Text(
-                  "Create an account",
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w300,
-                    fontSize: 14,
-                    decoration: TextDecoration.underline,
-                    decorationColor: Color.fromRGBO(198, 205, 250, 1),
-                    color: Color.fromRGBO(198, 205, 250, 1),
-                  ),
-                ),
-              ),
-              Spacer(),
               Container(
-                width: 250.0,
+                width: 200.0,
                 decoration: BoxDecoration(
                   color: Color(0xFF9CE1CF), 
                   borderRadius: BorderRadius.circular(40),
@@ -160,6 +143,23 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+              Padding(
+              padding: EdgeInsets.only(top: 20),
+              child : GestureDetector(
+                onTap: navigateToSignUp,
+                child: Text(
+                  "Create an account",
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w300,
+                    fontSize: 14,
+                    decoration: TextDecoration.underline,
+                    decorationColor: Color.fromRGBO(198, 205, 250, 1),
+                    color: Color.fromRGBO(198, 205, 250, 1),
+                  ),
+                ),
+              ),
+              ),
             ]
             ),
         )
@@ -179,6 +179,7 @@ class _LoginPageState extends State<LoginPage> {
         SizedBox(height: 10.0),
         _buildTextFormField(
           controller: emailController,
+          prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF9CE1CF)),
           hintText: "Enter email",
           obscureText: false,
         ),
@@ -197,8 +198,10 @@ class _LoginPageState extends State<LoginPage> {
         SizedBox(height: 10.0),
         _buildTextFormField(
           controller: passwordController,
+          prefixIcon: Icon(Icons.password_outlined, color:Color(0xFF9CE1CF)),
           hintText: "Enter password",
           obscureText: true,
+
         ),
       ],
     );
@@ -208,24 +211,27 @@ class _LoginPageState extends State<LoginPage> {
     required TextEditingController controller,
     required String hintText,
     bool obscureText = false,
+    Widget? prefixIcon,
   }) {
     return SizedBox(
       width: 300.0,
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
+        style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
         decoration: InputDecoration(
+          prefixIcon: prefixIcon,
           hintText: hintText,
-          hintStyle:TextStyle(color:Color.fromRGBO(127, 127, 127, 1), fontFamily: 'Roboto', fontWeight: FontWeight.w300),
+          hintStyle:TextStyle(color:Color.fromRGBO(195, 195, 195, 1), fontFamily: 'Roboto', fontWeight: FontWeight.w300),
           filled: true,
-          fillColor: Color.fromRGBO(255, 255, 255, 1),
+          fillColor: Color.fromARGB(255, 52, 81, 82),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(color: Colors.grey),
+            borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(color: Colors.blue),
+            borderSide: BorderSide(color: const Color.fromARGB(255, 33, 215, 243)),
           ),
           contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
         ),

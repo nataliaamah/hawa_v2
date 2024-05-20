@@ -166,7 +166,7 @@ class _SignUpState extends State<SignUp>{
                 fontFamily: 'Roboto',
                 fontWeight: FontWeight.w400,
                 fontSize: 16.0,
-                color: Color.fromRGBO(255, 255, 255, 1),
+                color: Color.fromARGB(255, 231, 255, 249),
               ),
             ),
           ),
@@ -180,10 +180,10 @@ class _SignUpState extends State<SignUp>{
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromRGBO(255, 255, 255, 1),
+                  fillColor: Color.fromARGB(255, 52, 81, 82),
                   enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide(color: Colors.grey),
+                      borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -192,7 +192,7 @@ class _SignUpState extends State<SignUp>{
                   contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                   hintText: 'Enter full name',
                   hintStyle: TextStyle(
-                    color: Color.fromRGBO(127, 127, 127, 1), 
+                    color: Color.fromRGBO(195, 195, 195, 1), 
                     fontFamily: 'Roboto', 
                     fontWeight: FontWeight.w300
                   ),
@@ -226,7 +226,7 @@ class _SignUpState extends State<SignUp>{
                 fontFamily: 'Roboto',
                 fontWeight: FontWeight.w400,
                 fontSize: 16.0,
-                color: Color.fromRGBO(255, 255, 255, 1),
+                color: Color.fromARGB(255, 231, 255, 249),
               ),
             ),
           ),
@@ -242,10 +242,10 @@ class _SignUpState extends State<SignUp>{
                     controller: dateOfBirthController,
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Color.fromRGBO(255, 255, 255, 1),
+                      fillColor: Color.fromARGB(255, 52, 81, 82),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.grey),
+                        borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -254,11 +254,11 @@ class _SignUpState extends State<SignUp>{
                       contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                       hintText: 'dd/mm/yyyy',
                       hintStyle: TextStyle(
-                        color: Color.fromRGBO(127, 127, 127, 1),
+                        color: Color.fromRGBO(195, 195, 195, 1),
                         fontFamily: 'Roboto',
                         fontWeight: FontWeight.w300,
                       ),
-                      suffixIcon: Icon(Icons.calendar_today, color: Colors.grey),
+                      suffixIcon: Icon(Icons.calendar_today, color: Color(0xFF9CE1CF)),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -290,7 +290,7 @@ class _SignUpState extends State<SignUp>{
                 fontFamily: 'Roboto',
                 fontWeight: FontWeight.w400,
                 fontSize: 16.0,
-                color: Color.fromRGBO(255, 255, 255, 1),
+                color: Color.fromARGB(255, 231, 255, 249),
               ),
             ),
           ),
@@ -302,10 +302,10 @@ class _SignUpState extends State<SignUp>{
               child: DropdownButtonFormField<String>(
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromRGBO(255, 255, 255, 1),
+                  fillColor: Color.fromARGB(255, 52, 81, 82),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Colors.grey),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -316,11 +316,13 @@ class _SignUpState extends State<SignUp>{
                 hint: Text(
                   'Select blood type',
                   style: TextStyle(
-                    color: Color.fromRGBO(127, 127, 127, 1),
+                    color: Color.fromRGBO(195, 195, 195, 1),
                     fontFamily: 'Roboto',
                     fontWeight: FontWeight.w300,
                   ),
                 ),
+                iconEnabledColor: Color(0xFF9CE1CF), 
+                iconDisabledColor: Colors.grey, 
                 items: <String>['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
                     .map((String value) {
                   return DropdownMenuItem<String>(
@@ -353,7 +355,7 @@ class _SignUpState extends State<SignUp>{
                 fontFamily: 'Roboto',
                 fontWeight: FontWeight.w400,
                 fontSize: 16.0,
-                color: Color.fromRGBO(255, 255, 255, 1),
+                color: Color.fromARGB(255, 231, 255, 249),
               ),
             ),
           ),
@@ -367,10 +369,10 @@ class _SignUpState extends State<SignUp>{
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromRGBO(255, 255, 255, 1),
+                  fillColor: Color.fromARGB(255, 52, 81, 82),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Colors.grey),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -379,7 +381,7 @@ class _SignUpState extends State<SignUp>{
                   contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                   hintText: 'Enter allergies',
                   hintStyle: TextStyle(
-                    color: Color.fromRGBO(127, 127, 127, 1), 
+                    color: Color.fromRGBO(195, 195, 195, 1), 
                     fontFamily: 'Roboto', 
                     fontWeight: FontWeight.w300
                   ),
@@ -406,7 +408,7 @@ class _SignUpState extends State<SignUp>{
                 fontFamily: 'Roboto',
                 fontWeight: FontWeight.w400,
                 fontSize: 16.0,
-                color: Color.fromRGBO(255, 255, 255, 1),
+                color: Color.fromARGB(255, 231, 255, 249),
               ),
             ),
           ),
@@ -420,10 +422,10 @@ class _SignUpState extends State<SignUp>{
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromRGBO(255, 255, 255, 1),
+                  fillColor: Color.fromARGB(255, 52, 81, 82),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Colors.grey),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -432,7 +434,7 @@ class _SignUpState extends State<SignUp>{
                   contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                   hintText: 'Enter current medication',
                   hintStyle: TextStyle(
-                    color: Color.fromRGBO(127, 127, 127, 1), 
+                    color: Color.fromRGBO(195, 195, 195, 1), 
                     fontFamily: 'Roboto', 
                     fontWeight: FontWeight.w300
                   ),
