@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:hawa_v1/signup_page2.dart';
 import 'package:intl/intl.dart';
 import 'package:hawa_v1/home_page.dart';
 import 'package:hawa_v1/login_page.dart';
@@ -28,16 +29,13 @@ class _SignUpState extends State<SignUp>{
       lastDate: DateTime.now(),
     );
     if (selectedDate != null) {
-      dateOfBirthController.text = DateFormat('dd-MM-yy').format(selectedDate);
+      dateOfBirthController.text = DateFormat('dd-MM-yyyy').format(selectedDate);
     }
   }
   
   void _submitForm(BuildContext context) { // Ensure context is passed here
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign up Successful!')),
-      );
-      Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(title: "Home",)),);
+      Navigator.push(context, MaterialPageRoute(builder: (context) => SignUp2()),);
     } else {
       setState(() {
         _autoValidate = true;
@@ -131,7 +129,7 @@ class _SignUpState extends State<SignUp>{
                             ),
                             minimumSize: Size(250.0, 40.0),
                           ),
-                          child: Text('Sign in', style: TextStyle(
+                          child: Text('Continue', style: TextStyle(
                             fontFamily: 'Roboto',
                             fontWeight: FontWeight.w700,
                             fontSize: 16.0,
@@ -203,6 +201,7 @@ class _SignUpState extends State<SignUp>{
                   }
                   return null;
                 },
+                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
               ),
             ),
           ),
@@ -265,7 +264,8 @@ class _SignUpState extends State<SignUp>{
                         return 'Date of birth is required';
                       }
                       return null;
-                    }
+                    },
+                    style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
                   ),
                 ),
               ),
@@ -323,6 +323,7 @@ class _SignUpState extends State<SignUp>{
                 ),
                 iconEnabledColor: Color(0xFF9CE1CF), 
                 iconDisabledColor: Colors.grey, 
+                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
                 items: <String>['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
                     .map((String value) {
                   return DropdownMenuItem<String>(
@@ -386,6 +387,7 @@ class _SignUpState extends State<SignUp>{
                     fontWeight: FontWeight.w300
                   ),
                 ),
+                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
               ),
             ),
           ),
@@ -439,6 +441,7 @@ class _SignUpState extends State<SignUp>{
                     fontWeight: FontWeight.w300
                   ),
                 ),
+                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
               ),
             ),
           ),
