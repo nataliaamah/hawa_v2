@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hawa_v1/home_page.dart';
 import 'package:hawa_v1/signup_page.dart';
@@ -14,50 +15,58 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String errorMessage = '';
 
   Future<void> signIn() async {
-  try {
-    UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-      email: emailController.text,
-      password: passwordController.text,
-    );
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => HomePage(title: "Home Page")),
-    );
-  } on FirebaseAuthException catch (e) {
-    setState(() {
-      switch (e.code) {
-        case 'user-not-found':
-          errorMessage = 'No user found for that email.';
-          break;
-        case 'wrong-password':
-          errorMessage = 'Wrong password provided for that user.';
-          break;
-        case 'invalid-email':
-          errorMessage = 'The email address is badly formatted.';
-          break;
-        case 'user-disabled':
-          errorMessage = 'The user account has been disabled.';
-          break;
-        case 'too-many-requests':
-          errorMessage = 'Too many requests. Try again later.';
-          break;
-        case 'invalid-credential':
-          errorMessage = "Incorrect email or password";
-          break;
-        default:
-          errorMessage = 'An unknown error occurred: ${e.message}';
+    try {
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: emailController.text,
+        password: passwordController.text,
+      );
+      User? user = userCredential.user;
+
+      if (user != null) {
+        DocumentSnapshot userData = await _firestore.collection('users').doc(user.uid).get();
+        String fullName = userData['fullName'];
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage(title: "Home Page", fullName: fullName)),
+        );
       }
-    });
-  } catch (e) {
-    print("General exception: ${e.toString()}");
-    setState(() {
-      errorMessage = 'An error occurred. Please try again. ${e.toString()}';
-    });
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        switch (e.code) {
+          case 'user-not-found':
+            errorMessage = 'No user found for that email.';
+            break;
+          case 'wrong-password':
+            errorMessage = 'Wrong password provided for that user.';
+            break;
+          case 'invalid-email':
+            errorMessage = 'The email address is badly formatted.';
+            break;
+          case 'user-disabled':
+            errorMessage = 'The user account has been disabled.';
+            break;
+          case 'too-many-requests':
+            errorMessage = 'Too many requests. Try again later.';
+            break;
+          case 'invalid-credential':
+            errorMessage = "Incorrect email or password";
+            break;
+          default:
+            errorMessage = 'An unknown error occurred: ${e.message}';
+        }
+      });
+    } catch (e) {
+      print("General exception: ${e.toString()}");
+      setState(() {
+        errorMessage = 'An error occurred. Please try again. ${e.toString()}';
+      });
+    }
   }
-}
 
   void navigateToSignUp() {
     Navigator.push(
@@ -238,3 +247,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+

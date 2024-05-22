@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hawa_v1/onboarding.dart';
 import 'package:hawa_v1/home_page.dart';
@@ -23,11 +24,13 @@ class HawaApp extends StatefulWidget {
 
 class _HawaAppState extends State<HawaApp> {
   bool _seenOnboard = false;
+  String? fullName;
 
   @override
   void initState() {
     super.initState();
     _checkOnboardStatus();
+    _fetchUserData();
   }
 
   Future<void> _checkOnboardStatus() async {
@@ -38,13 +41,23 @@ class _HawaAppState extends State<HawaApp> {
     });
   }
 
+  Future<void> _fetchUserData() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userData = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      setState(() {
+        fullName = userData['fullName'];
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Hawa v1',
       home: _seenOnboard
-          ? (FirebaseAuth.instance.currentUser != null
-              ? HomePage(title: 'Hawa')
+          ? (FirebaseAuth.instance.currentUser != null && fullName != null
+              ? HomePage(title: 'Hawa', fullName: fullName!)
               : LoginPage())
           : Onboarding(
               onCompleted: () async {
@@ -55,7 +68,7 @@ class _HawaAppState extends State<HawaApp> {
                 });
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => HomePage(title: 'Hawa')),
+                  MaterialPageRoute(builder: (context) => LoginPage()),
                 );
               },
             ),

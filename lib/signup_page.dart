@@ -329,7 +329,7 @@ class _SignUpState extends State<SignUp>{
                 ),
                 iconEnabledColor: Color(0xFF9CE1CF), 
                 iconDisabledColor: Colors.grey, 
-                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+                style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
                 items: <String>['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
                     .map((String value) {
                   return DropdownMenuItem<String>(

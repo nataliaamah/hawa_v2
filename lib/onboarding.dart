@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:hawa_v1/login_page.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Onboarding extends StatelessWidget {
   final VoidCallback onCompleted;
@@ -109,7 +110,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           Text(
             "Your Guardian in\n Times of Need",
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 24,),
+            style: GoogleFonts.quicksand(textStyle: TextStyle(fontSize: 30, color: const Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.w700)),
           ),
           Spacer(flex: 37),
           SizedBox(height: 30),
@@ -148,7 +149,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             SizedBox(height: 10),
             Text(
               "Share Your Location",
-              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 23),
+              style: GoogleFonts.quicksand(textStyle: TextStyle(fontSize: 24, color: const Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.w700)),
             ),
             SizedBox(height:10),
             Text(
@@ -192,7 +193,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             SizedBox(height: 10),
             Text(
               "Capture Your Surroundings",
-              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 23),
+              style: GoogleFonts.quicksand(textStyle: TextStyle(fontSize: 24, color: const Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.w700)),
               textAlign: TextAlign.center,
             ),
             SizedBox(height:10),
@@ -238,7 +239,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             SizedBox(height: 10),
             Text(
               "Emergency Calls",
-              style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 23),
+              style: GoogleFonts.quicksand(textStyle: TextStyle(fontSize: 24, color: const Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.w700)),
             ),
             SizedBox(height:10),
             Text(

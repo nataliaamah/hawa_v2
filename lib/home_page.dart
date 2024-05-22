@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'half_circle_painter.dart'; 
 import 'package:google_fonts/google_fonts.dart';
 
 class HomePage extends StatefulWidget {
   final String title;
+  final String fullName;
 
-  HomePage({required this.title});
+  HomePage({required this.title, required this.fullName});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -36,9 +39,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     });
   }
 
+  String getFirstName(String fullName) {
+    return fullName.split(' ')[0];
+  }
+
   @override
   Widget build(BuildContext context) {
+    String firstName = getFirstName(widget.fullName);
+
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 45, 45, 45),
       appBar: AppBar(
         backgroundColor: Colors.teal[700],
         elevation: 0,
@@ -71,7 +81,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Profile clicked")));
                 },
-                icon : Icon(Icons.account_circle_outlined, size: 40, color: Color.fromARGB(255, 45, 45, 45)),
+                icon : Icon(Icons.account_circle_rounded, size: 40, color: Color.fromARGB(255, 45, 45, 45)),
               )
               )
             ]
@@ -113,11 +123,92 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   ),
                 ),
               ),
+              SizedBox(height: 60,),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children : [ 
+                  Center(
+                    child: Text( "Welcome, " + firstName,
+                    style: GoogleFonts.quicksand(textStyle: TextStyle(fontSize: 30, color: const Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.w500)),
+                    )
+                  ),
+                  SizedBox(height: 60),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () {
+
+                        },
+                        icon: Icon(Icons.phone, size: 24),
+                        label: Text("Call"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          minimumSize: Size(155, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: Colors.black),
+                          ),
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () {
+
+                        },
+                        icon: Icon(Icons.camera_alt, size: 24),
+                        label: Text("Camera"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          minimumSize: Size(155, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: Colors.black),
+                          ),
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () {
+
+                        },
+                        icon: Icon(Icons.vibration, size: 24),
+                        label: Text("Detect Shake"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          minimumSize: Size(320, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: Colors.black),
+                          ),
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () {
+
+                        },
+                        icon: Icon(Icons.location_on, size: 24),
+                        label: Text("Share Location"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          minimumSize: Size(320, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: Colors.black),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ]
+            ),
             ],
           ),
         ],
       ),
-      backgroundColor: const Color.fromARGB(255, 45, 45, 45), // Set a light background color
     );
   }
 }

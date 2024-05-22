@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:hawa_v1/firebase_service.dart';
-import 'package:hawa_v1/home_page.dart';
-import 'package:hawa_v1/login_page.dart';
+import 'firebase_service.dart';
+import 'home_page.dart';
+import 'login_page.dart';
 
 class SignUp2 extends StatefulWidget {
   final String fullName;
@@ -49,7 +48,15 @@ class _SignUp2State extends State<SignUp2> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Sign up Successful!')),
           );
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage(title: "Home",)));
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(
+                title: "Home",
+                fullName: widget.fullName,
+              ),
+            ),
+          );
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Sign up failed: $e')),
@@ -112,8 +119,9 @@ class _SignUp2State extends State<SignUp2> {
                             ),
                           ),
                           WidgetSpan(
-                              child: Text("\n"),
-                              style: TextStyle(fontSize: 10)),
+                            child: Text("\n"),
+                            style: TextStyle(fontSize: 10),
+                          ),
                           TextSpan(
                             text: "Enter your account information",
                             style: TextStyle(
@@ -145,8 +153,7 @@ class _SignUp2State extends State<SignUp2> {
                           onPressed: () => _submitForm(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFF9CE1CF),
-                            foregroundColor:
-                                const Color.fromARGB(255, 0, 0, 0),
+                            foregroundColor: const Color.fromARGB(255, 0, 0, 0),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -372,6 +379,6 @@ class _SignUp2State extends State<SignUp2> {
 
   void backToLogin(BuildContext context) {
     Navigator.push(context,
-        MaterialPageRoute(builder: (context) => LoginPage()));
+      MaterialPageRoute(builder: (context) => LoginPage()));
   }
 }
