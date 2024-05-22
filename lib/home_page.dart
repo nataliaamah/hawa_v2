@@ -18,6 +18,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   double _glowRadius = 10.0;
   late Timer _timer;
+  List<bool> _buttonStates = [false, false, false, false];
 
   @override
   void initState() {
@@ -29,6 +30,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void dispose() {
     _timer.cancel();
     super.dispose();
+  }
+
+  void _toggleButtonState(int index) {
+    setState(() {
+      _buttonStates[index] = !_buttonStates[index];
+    });
   }
 
   void _startGlowAnimation() {
@@ -97,7 +104,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Color.fromARGB(255, 7, 170, 154).withOpacity(0.6),
+                        color: Color.fromARGB(255, 80, 190, 179).withOpacity(0.6),
                         spreadRadius: _glowRadius,
                         blurRadius: _glowRadius,
                       ),
@@ -111,14 +118,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         textStyle: TextStyle(
                           color: Colors.teal[900], // Darker teal color for better contrast
                           fontWeight: FontWeight.w900,
-                          fontSize: 50, // Adjust font size for better readability
+                          fontSize: 60, // Adjust font size for better readability
                         ),
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
                       shape: CircleBorder(),
-                      backgroundColor: Colors.teal[200], // Light teal color
-                      padding: EdgeInsets.all(90), // Adjust padding to fit better
+                      backgroundColor: Colors.teal[200], 
+                      padding: EdgeInsets.all(83), 
                     ),
                   ),
                 ),
@@ -134,73 +141,65 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   ),
                   SizedBox(height: 60),
                   Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
+                    spacing: 15,
+                    runSpacing: 15,
                     children: [
                       ElevatedButton.icon(
-                        onPressed: () {
-
-                        },
-                        icon: Icon(Icons.phone, size: 24),
-                        label: Text("Call"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          minimumSize: Size(155, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(color: Colors.black),
-                          ),
-                        ),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () {
-
-                        },
-                        icon: Icon(Icons.camera_alt, size: 24),
-                        label: Text("Camera"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          minimumSize: Size(155, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(color: Colors.black),
-                          ),
-                        ),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () {
-
-                        },
-                        icon: Icon(Icons.vibration, size: 24),
-                        label: Text("Detect Shake"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          minimumSize: Size(320, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(color: Colors.black),
-                          ),
-                        ),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () {
-
-                        },
-                        icon: Icon(Icons.location_on, size: 24),
-                        label: Text("Share Location"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          minimumSize: Size(320, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(color: Colors.black),
+                    onPressed: () => _toggleButtonState(0),
+                    icon: Icon(Icons.phone, size: 24),
+                    label: Text("Call"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _buttonStates[0] ? Color.fromRGBO(253, 231, 76, 1) : Colors.transparent,
+                      foregroundColor: _buttonStates[0] ? Color.fromARGB(255, 45, 45, 45) : Color.fromRGBO(253, 231, 76, 1),
+                      minimumSize: Size(152.5, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(color: Color.fromRGBO(253, 231, 76, 1)),
                       ),
                     ),
                   ),
+                  ElevatedButton.icon(
+                    onPressed: () => _toggleButtonState(1),
+                    icon: Icon(Icons.camera_alt, size: 24),
+                    label: Text("Camera"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _buttonStates[1] ? Color.fromRGBO(247, 86, 124, 1) : Colors.transparent,
+                      foregroundColor: _buttonStates[1] ? Color.fromARGB(255, 45, 45, 45) : Color.fromRGBO(247, 86, 124, 1),
+                      minimumSize: Size(152.5, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(color: Color.fromRGBO(247, 86, 124, 1)),
+                      ),
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () => _toggleButtonState(2),
+                    icon: Icon(Icons.vibration, size: 24),
+                    label: Text("Detect Shake"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _buttonStates[2] ? Color.fromRGBO(128, 206, 215, 1) : Colors.transparent,
+                      foregroundColor: _buttonStates[2] ? Color.fromARGB(255, 45, 45, 45) : Color.fromRGBO(128, 206, 215, 1),
+                      minimumSize: Size(320, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(color: Color.fromRGBO(128, 206, 215, 1)),
+                      ),
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () => _toggleButtonState(3),
+                    icon: Icon(Icons.location_on, size: 24),
+                    label: Text("Share Location"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _buttonStates[3] ? Color.fromRGBO(196, 174, 247, 1) : Colors.transparent,
+                      foregroundColor: _buttonStates[3] ? Color.fromARGB(255, 45, 45, 45) : Color.fromRGBO(196, 174, 247, 1),
+                      minimumSize: Size(320, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(color: Color.fromRGBO(196, 174, 247, 1)),
+                      ),
+                    )
+                  )
                 ],
               ),
             ]
