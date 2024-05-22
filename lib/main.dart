@@ -44,7 +44,7 @@ class _HawaAppState extends State<HawaApp> {
       title: 'Hawa v1',
       home: _seenOnboard
           ? (FirebaseAuth.instance.currentUser != null
-              ? const HomePage(title: 'Hawa')
+              ? HomePage(title: 'Hawa')
               : LoginPage())
           : Onboarding(
               onCompleted: () async {
@@ -55,7 +55,7 @@ class _HawaAppState extends State<HawaApp> {
                 });
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const HomePage(title: 'Hawa')),
+                  MaterialPageRoute(builder: (context) => HomePage(title: 'Hawa')),
                 );
               },
             ),

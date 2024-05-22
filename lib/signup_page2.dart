@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:hawa_v1/firebase_service.dart';
 import 'package:hawa_v1/home_page.dart';
 import 'package:hawa_v1/login_page.dart';
 
 class SignUp2 extends StatefulWidget {
-  SignUp2({Key? key}) : super(key: key);
+  final String fullName;
+  final String dateOfBirth;
+  final String bloodType;
+  final String allergies;
+  final String medication;
+
+  SignUp2({
+    Key? key,
+    required this.fullName,
+    required this.dateOfBirth,
+    required this.bloodType,
+    required this.allergies,
+    required this.medication,
+  }) : super(key: key);
 
   @override
   _SignUp2State createState() => _SignUp2State();
@@ -17,12 +31,35 @@ class _SignUp2State extends State<SignUp2> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController verifyPasswordController = TextEditingController();
 
-  void _submitForm(BuildContext context) {
+  void _submitForm(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign up Successful!')),
-      );
-      Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(title: "Home",)),);
+      if (passwordController.text == verifyPasswordController.text) {
+        Map<String, dynamic> userData = {
+          'fullName': widget.fullName,
+          'dateOfBirth': widget.dateOfBirth,
+          'bloodType': widget.bloodType,
+          'allergies': widget.allergies,
+          'medication': widget.medication,
+          'email': emailController.text,
+        };
+
+        FirebaseService firebaseService = FirebaseService();
+        try {
+          await firebaseService.signUpWithEmail(emailController.text, passwordController.text, userData);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Sign up Successful!')),
+          );
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage(title: "Home",)));
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Sign up failed: $e')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Passwords do not match')),
+        );
+      }
     } else {
       setState(() {
         _autoValidate = true;
@@ -335,6 +372,6 @@ class _SignUp2State extends State<SignUp2> {
 
   void backToLogin(BuildContext context) {
     Navigator.push(context,
-      MaterialPageRoute(builder: (context) => LoginPage()));
+        MaterialPageRoute(builder: (context) => LoginPage()));
   }
 }

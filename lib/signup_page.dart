@@ -35,7 +35,13 @@ class _SignUpState extends State<SignUp>{
   
   void _submitForm(BuildContext context) { // Ensure context is passed here
     if (_formKey.currentState!.validate()) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => SignUp2()),);
+      Navigator.push(context, MaterialPageRoute(builder: (context) => SignUp2(
+        fullName : fullNameController.text,
+        dateOfBirth : dateOfBirthController.text,
+        bloodType: bloodController.text,
+        allergies: allergiesController.text,
+        medication: medicationController.text,
+      )),);
     } else {
       setState(() {
         _autoValidate = true;
