@@ -4,6 +4,7 @@ import 'package:hawa_v1/login_page.dart';
 import 'half_circle_painter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'about_us.dart';
+import 'contact_us.dart';
 
 class HomePage extends StatefulWidget {
   final String title;
@@ -231,32 +232,34 @@ class AppDrawer extends StatelessWidget {
       backgroundColor: Color.fromARGB(255, 45, 45, 45),
       child: ListView(
         children: <Widget>[
+          SizedBox(height: 30,),
           ListTile(
-            contentPadding: EdgeInsets.only(left: 230, top: 30),
+            contentPadding: EdgeInsets.only(left: 230),
             leading: Icon(Icons.close_rounded, size: 30, color: Color.fromRGBO(255, 255, 255, 1),),
             onTap: () {
               Navigator.pop(context);  
             },
           ),
+          SizedBox(height: 100,),
           ListTile(
-            contentPadding: EdgeInsets.only(left: 50, top: 100),
+            contentPadding: EdgeInsets.only(left: 50),
             title: Text('About Us', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1), fontWeight: FontWeight.w500),),
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => AboutUsPage()));
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("About Us clicked")));
             },
           ),
+          SizedBox(height: 20,),
           ListTile(
-            contentPadding: EdgeInsets.only(left: 50, top: 20),
+            contentPadding: EdgeInsets.only(left: 50),
             title: Text('Contact Us', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1), fontWeight: FontWeight.w500),),
             onTap: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Contact Us clicked")));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => ContactUsPage()));
             },
           ),
+          SizedBox(height: 350,),
           ListTile(
             leading: Icon(Icons.logout_rounded, size: 25, color: Color.fromRGBO(255, 255, 255, 1),),
-            contentPadding: EdgeInsets.only(left: 50, top: 350),
+            contentPadding: EdgeInsets.only(left: 50),
             title: Text('Logout', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1),),),
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));

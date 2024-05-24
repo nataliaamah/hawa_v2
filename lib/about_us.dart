@@ -5,91 +5,113 @@ class AboutUsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        leading: Padding(
-          padding: EdgeInsets.only(left: 24, top: 24),
-          child :
-          IconButton(
-            icon: Icon(Icons.arrow_back, color: Color.fromRGBO(255, 255, 255, 1), size: 25,),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          )
-        ),
-        title: Padding(
-          padding: EdgeInsets.only(top: 40),
-          child : Text('About Us', style: TextStyle(color: Color.fromRGBO(255, 255, 255, 1))),
-        ),
-        centerTitle: true,
-      ),
-
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-              Image.asset(
-                "assets/images/natalia.png",
-                width: 400, // Adjust the width and height as needed
-                height: 300,
-                fit: BoxFit.cover, // Ensures the image fits within the specified dimensions
+      body: CustomScrollView(
+        slivers: <Widget>[
+          SliverAppBar(
+            expandedHeight: 80.0,
+            floating: false,
+            pinned: true,
+            backgroundColor: Color.fromARGB(255, 10, 38, 39),
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: EdgeInsets.only(left: 150, bottom: 20),
+              title: Text(
+                "About Us",
+                style: TextStyle(color: Colors.white, fontSize: 16.0),
               ),
-            SizedBox(height: 10), // Add some spacing between the image and text
-            Text(
-              'Amera Natalia Mah',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.quicksand(
-                textStyle: TextStyle(
-                  fontSize: 20,
-                  color: const Color.fromARGB(255, 255, 255, 255),
-                  fontWeight: FontWeight.w500,
+            ),
+            leading: Padding(
+              padding: EdgeInsets.only(left: 24, top: 24),
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: Color.fromRGBO(255, 255, 255, 1),
+                  size: 25,
                 ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
               ),
             ),
-            Text(
-              'Back-End Developer',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w300,
-                color: Color.fromARGB(255, 255, 255, 255),
-              ),
-            ),
-            Image.asset(
-                "assets/images/natalia.png",
-                width: 400, // Adjust the width and height as needed
-                height: 300,
-                fit: BoxFit.cover, // Ensures the image fits within the specified dimensions
-              ),
-            SizedBox(height: 10), // Add some spacing between the image and text
-            Text(
-              'Amera Natalia Mah',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.quicksand(
-                textStyle: TextStyle(
-                  fontSize: 20,
-                  color: const Color.fromARGB(255, 255, 255, 255),
-                  fontWeight: FontWeight.w500,
+          ),
+          SliverList(
+            delegate: SliverChildListDelegate(
+              [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _buildProfile(
+                        context,
+                        image: 'assets/images/natalia.png',
+                        name: 'Amera Natalia Mah',
+                        role: 'Back-end Developer',
+                      ),
+                      _buildProfile(
+                        context,
+                        image: 'assets/images/illaila.png',
+                        name: 'Nur Illaila Nadiah',
+                        role: 'Front-end Developer',
+                      ),
+                      _buildProfile(
+                        context,
+                        image: 'assets/images/illaila.png',
+                        name: 'Nur Afiqah',
+                        role: 'Quality Assurance',
+                      ),
+                      _buildProfile(
+                        context,
+                        image: 'assets/images/illaila.png',
+                        name: 'Aliah Anisah',
+                        role: 'Project Manager',
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
-            Text(
-              'Back-End Developer',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w300,
-                color: Color.fromARGB(255, 255, 255, 255),
-              ),
-            ),
-          ],
-        ),
-      )
-
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildProfile(BuildContext context, {required String image, required String name, required String role}) {
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Image.asset(
+            image,
+            width: 300,
+            height: 200,
+            fit: BoxFit.cover,
+          ),
+        ),
+        SizedBox(height: 5),
+        Text(
+          name,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.quicksand(
+            textStyle: TextStyle(
+              fontSize: 20,
+              color: const Color.fromARGB(255, 255, 255, 255),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Text(
+          role,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w300,
+            color: Color.fromARGB(255, 255, 255, 255),
+          ),
+        ),
+        SizedBox(height: 50),
+      ],
     );
   }
 }
