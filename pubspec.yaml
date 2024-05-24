@@ -35,6 +35,7 @@ flutter:
     - assets/images/nextArrow.png
     - assets/images/backArrow.png
     - assets/images/hawa_name.png
+    - assets/images/natalia.png
   fonts:
     - family : Roboto
       fonts:
