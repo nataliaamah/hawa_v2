@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:hawa_v1/signup_page2.dart';
+import 'package:hawa_v1/signup_page3.dart';
 import 'package:intl/intl.dart';
 import 'package:hawa_v1/home_page.dart';
 import 'package:hawa_v1/login_page.dart';
+import 'package:hawa_v1/signup_page2.dart';
 
 class SignUp extends StatefulWidget {
   SignUp({Key? key}) : super(key: key);
@@ -33,7 +34,7 @@ class _SignUpState extends State<SignUp>{
     }
   }
   
-  void _submitForm(BuildContext context) { // Ensure context is passed here
+  void _submitForm(BuildContext context) {
     if (_formKey.currentState!.validate()) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => SignUp2(
         fullName : fullNameController.text,
@@ -136,7 +137,7 @@ class _SignUpState extends State<SignUp>{
                       child: SizedBox(
                         width: 150, 
                         child: ElevatedButton(
-                          onPressed: () => _submitForm(context), // Pass context here
+                          onPressed: () => _submitForm(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFF9CE1CF), 
                             foregroundColor: const Color.fromARGB(255, 0, 0, 0), 

@@ -1,73 +1,84 @@
 import 'package:flutter/material.dart';
-import 'package:hawa_v1/signup_page3.dart';
+import 'firebase_service.dart';
+import 'home_page.dart';
+import 'login_page.dart';
 
-class SignUp2 extends StatefulWidget {
+class SignUp3 extends StatefulWidget {
   final String fullName;
   final String dateOfBirth;
   final String bloodType;
   final String allergies;
   final String medication;
+  final String contactName;
+  final String contactNumber;
 
-  SignUp2({
+  SignUp3({
     Key? key,
     required this.fullName,
     required this.dateOfBirth,
     required this.bloodType,
     required this.allergies,
     required this.medication,
+    required this.contactName,
+    required this.contactNumber,
   }) : super(key: key);
 
   @override
-  _SignUp2State createState() => _SignUp2State();
+  _SignUp3State createState() => _SignUp3State();
 }
 
-class _SignUp2State extends State<SignUp2> {
+class _SignUp3State extends State<SignUp3> {
   final _formKey = GlobalKey<FormState>();
   bool _autoValidate = false;
-  final TextEditingController contactNameController = TextEditingController();
-  final TextEditingController contactNumberController = TextEditingController();
-  String _relationship = 'Parent';
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController verifyPasswordController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    // Pre-fill controllers with passed data
-    fullNameController.text = widget.fullName;
-    dateOfBirthController.text = widget.dateOfBirth;
-    bloodController.text = widget.bloodType;
-    allergiesController.text = widget.allergies;
-    medicationController.text = widget.medication;
-  }
-
-  void _submitForm(BuildContext context) {
+  void _submitForm(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      // Navigate to SignUp3 with filled data
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SignUp3(
-            fullName: fullNameController.text,
-            dateOfBirth: dateOfBirthController.text,
-            bloodType: bloodController.text,
-            allergies: allergiesController.text,
-            medication: medicationController.text,
-            contactName: contactNameController.text,
-            contactNumber: contactNumberController.text,
-          ),
-        ),
-      );
+      if (passwordController.text == verifyPasswordController.text) {
+        Map<String, dynamic> userData = {
+          'fullName': widget.fullName,
+          'dateOfBirth': widget.dateOfBirth,
+          'bloodType': widget.bloodType,
+          'allergies': widget.allergies,
+          'medication': widget.medication,
+          'email': emailController.text,
+          'contactName': widget.contactName,
+          'contactNumber': widget.contactNumber,
+        };
+
+        FirebaseService firebaseService = FirebaseService();
+        try {
+          await firebaseService.signUpWithEmail(emailController.text, passwordController.text, userData);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Sign up Successful!')),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(
+                title: "Home",
+                fullName: widget.fullName,
+              ),
+            ),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Sign up failed: $e')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Passwords do not match')),
+        );
+      }
     } else {
       setState(() {
         _autoValidate = true;
       });
     }
   }
-
-  final TextEditingController fullNameController = TextEditingController();
-  final TextEditingController dateOfBirthController = TextEditingController();
-  final TextEditingController bloodController = TextEditingController();
-  final TextEditingController allergiesController = TextEditingController();
-  final TextEditingController medicationController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +126,7 @@ class _SignUp2State extends State<SignUp2> {
                           ),
                           WidgetSpan(child: SizedBox(height: 40)), // Add space
                           TextSpan(
-                            text: "Step 2/3\n",
+                            text: "Step 3/3\n",
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontWeight: FontWeight.w500,
@@ -125,7 +136,7 @@ class _SignUp2State extends State<SignUp2> {
                           ),
                           WidgetSpan(child: SizedBox(height: 20)), // Add space
                           TextSpan(
-                            text: "Enter your emergency contact information",
+                            text: "Enter your account information",
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontWeight: FontWeight.w300,
@@ -139,11 +150,11 @@ class _SignUp2State extends State<SignUp2> {
                     ),
                   ),
                   SizedBox(height: 20),
-                  _buildContactNameSection(context),
+                  _buildEmailSection(context),
                   SizedBox(height: 20),
-                  _buildContactNumberSection(context),
+                  _buildPasswordSection(context),
                   SizedBox(height: 20),
-                  _buildRelationshipSection(context),
+                  _buildVerifyPasswordSection(context),
                   SizedBox(height: 20),
                   Padding(
                     padding: const EdgeInsets.only(top: 5, bottom: 20),
@@ -162,7 +173,7 @@ class _SignUp2State extends State<SignUp2> {
                             minimumSize: Size(250.0, 40.0),
                           ),
                           child: Text(
-                            'Finish',
+                            'Sign up',
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontWeight: FontWeight.w700,
@@ -183,7 +194,7 @@ class _SignUp2State extends State<SignUp2> {
     );
   }
 
-  Widget _buildContactNameSection(BuildContext context) {
+  Widget _buildEmailSection(BuildContext context) {
     return Container(
       margin: EdgeInsets.only(right: 20),
       padding: EdgeInsets.symmetric(horizontal: 1),
@@ -193,7 +204,7 @@ class _SignUp2State extends State<SignUp2> {
           Padding(
             padding: EdgeInsets.only(left: 10),
             child: Text(
-              "Contact Name *",
+              "Email *",
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontWeight: FontWeight.w400,
@@ -208,34 +219,40 @@ class _SignUp2State extends State<SignUp2> {
             child: Container(
               width: double.infinity,
               child: TextFormField(
-                controller: contactNameController,
+                controller: emailController,
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Color.fromARGB(255, 52, 81, 82),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                    borderSide: BorderSide(
+                        color: Color.fromARGB(255, 52, 81, 82)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
                     borderSide: BorderSide(color: Colors.blue),
                   ),
-                  contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-                  hintText: 'Enter contact name',
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                  hintText: 'Enter email',
                   hintStyle: TextStyle(
-                    color: Color.fromRGBO(195, 195, 195, 1),
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w300,
-                  ),
+                      color: Color.fromRGBO(195, 195, 195, 1),
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w300),
                 ),
+                style: TextStyle(color: Colors.white), // Make input text white
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Contact name is required';
+                    return 'Email is required';
+                  }
+                  if (!RegExp(
+                          r'^[^@]+@[^@]+\.[^@]+')
+                      .hasMatch(value)) {
+                    return 'Enter a valid email address';
                   }
                   return null;
                 },
-                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
               ),
             ),
           ),
@@ -244,7 +261,7 @@ class _SignUp2State extends State<SignUp2> {
     );
   }
 
-  Widget _buildContactNumberSection(BuildContext context) {
+  Widget _buildPasswordSection(BuildContext context) {
     return Container(
       margin: EdgeInsets.only(right: 20),
       padding: EdgeInsets.symmetric(horizontal: 1),
@@ -254,7 +271,7 @@ class _SignUp2State extends State<SignUp2> {
           Padding(
             padding: EdgeInsets.only(left: 10),
             child: Text(
-              "Contact Number *",
+              "Password *",
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontWeight: FontWeight.w400,
@@ -269,38 +286,39 @@ class _SignUp2State extends State<SignUp2> {
             child: Container(
               width: double.infinity,
               child: TextFormField(
-                controller: contactNumberController,
-                keyboardType: TextInputType.phone,
+                controller: passwordController,
+                obscureText: true,
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Color.fromARGB(255, 52, 81, 82),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                    borderSide: BorderSide(
+                        color: Color.fromARGB(255, 52, 81, 82)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
                     borderSide: BorderSide(color: Colors.blue),
                   ),
-                  contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-                  hintText: 'Enter contact number',
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                  hintText: 'Enter password',
                   hintStyle: TextStyle(
-                    color: Color.fromRGBO(195, 195, 195, 1),
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w300,
-                  ),
+                      color: Color.fromRGBO(195, 195, 195, 1),
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w300),
                 ),
+                style: TextStyle(color: Colors.white), // Make input text white
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Contact number is required';
+                    return 'Password is required';
                   }
-                  if (!RegExp(r'^\d+$').hasMatch(value)) {
-                    return 'Enter a valid contact number';
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
                   }
                   return null;
                 },
-                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
               ),
             ),
           ),
@@ -309,75 +327,74 @@ class _SignUp2State extends State<SignUp2> {
     );
   }
 
-  Widget _buildRelationshipSection(BuildContext context) {
-  return Container(
-    margin: EdgeInsets.only(right: 20),
-    padding: EdgeInsets.symmetric(horizontal: 1),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: Text(
-            "Relationship *",
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontWeight: FontWeight.w400,
-              fontSize: 16.0,
-              color: Color.fromARGB(255, 231, 255, 249),
-            ),
-          ),
-        ),
-        SizedBox(height: 6),
-        Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: Container(
-            width: double.infinity,
-            child: DropdownButtonFormField<String>(
-              value: _relationship,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Color.fromARGB(255, 52, 81, 82),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-                contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+  Widget _buildVerifyPasswordSection(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(right: 20),
+      padding: EdgeInsets.symmetric(horizontal: 1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Text(
+              "Verify Password *",
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w400,
+                fontSize: 16.0,
+                color: Color.fromARGB(255, 231, 255, 249),
               ),
-              dropdownColor: Colors.white,
-              style: TextStyle(color: Colors.white), // Style for the selected item text
-              items: <String>['Parent', 'Sibling', 'Close Friend']
-                  .map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w400)), // Style for the dropdown items
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _relationship = newValue!;
-                });
-              },
-              selectedItemBuilder: (BuildContext context) {
-                return <String>['Parent', 'Sibling', 'Close Friend'].map<Widget>((String value) {
-                  return Text(
-                    value,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  );
-                }).toList();
-              },
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+          SizedBox(height: 6),
+          Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Container(
+              width: double.infinity,
+              child: TextFormField(
+                controller: verifyPasswordController,
+                obscureText: true,
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(
+                        color: Color.fromARGB(255, 52, 81, 82)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                  hintText: 'Verify password',
+                  hintStyle: TextStyle(
+                      color: Color.fromRGBO(195, 195, 195, 1),
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w300),
+                ),
+                style: TextStyle(color: Colors.white), // Make input text white
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Verify password is required';
+                  }
+                  if (value != passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void backToLogin(BuildContext context) {
+    Navigator.push(context,
+      MaterialPageRoute(builder: (context) => LoginPage()));
+  }
 }

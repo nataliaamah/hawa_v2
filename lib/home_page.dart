@@ -147,56 +147,56 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       ElevatedButton.icon(
                     onPressed: () => _toggleButtonState(0),
                     icon: Icon(Icons.phone, size: 24),
-                    label: Text("Call"),
+                    label: Text("Call", style: TextStyle(fontSize: 17),),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _buttonStates[0] ? Color.fromRGBO(253, 231, 76, 1) : Colors.transparent,
-                      foregroundColor: _buttonStates[0] ? Color.fromARGB(255, 45, 45, 45) : Color.fromRGBO(253, 231, 76, 1),
+                      backgroundColor: _buttonStates[0] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 45, 45, 45),
+                      foregroundColor: _buttonStates[0] ? Color.fromARGB(255, 45, 45, 45) : Color.fromARGB(255, 255, 255, 255),
                       minimumSize: Size(152.5, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: Color.fromRGBO(253, 231, 76, 1)),
+                        side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
                       ),
                     ),
                   ),
                   ElevatedButton.icon(
                     onPressed: () => _toggleButtonState(1),
                     icon: Icon(Icons.camera_alt, size: 24),
-                    label: Text("Camera"),
+                    label: Text("Camera", style: TextStyle(fontSize: 17),),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _buttonStates[1] ? Color.fromRGBO(247, 86, 124, 1) : Colors.transparent,
-                      foregroundColor: _buttonStates[1] ? Color.fromARGB(255, 45, 45, 45) : Color.fromRGBO(247, 86, 124, 1),
+                      backgroundColor: _buttonStates[1] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 45, 45, 45),
+                      foregroundColor: _buttonStates[1] ? Color.fromARGB(255, 45, 45, 45) : Color.fromARGB(255, 255, 255, 255),
                       minimumSize: Size(152.5, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: Color.fromRGBO(247, 86, 124, 1)),
+                        side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
                       ),
                     ),
                   ),
                   ElevatedButton.icon(
                     onPressed: () => _toggleButtonState(2),
                     icon: Icon(Icons.vibration, size: 24),
-                    label: Text("Detect Shake"),
+                    label: Text("Detect Shake", style: TextStyle(fontSize: 17),),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _buttonStates[2] ? Color.fromRGBO(128, 206, 215, 1) : Colors.transparent,
-                      foregroundColor: _buttonStates[2] ? Color.fromARGB(255, 45, 45, 45) : Color.fromRGBO(128, 206, 215, 1),
+                      backgroundColor: _buttonStates[2] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 45, 45, 45),
+                      foregroundColor: _buttonStates[2] ? Color.fromARGB(255, 45, 45, 45) : Color.fromARGB(255, 255, 255, 255),
                       minimumSize: Size(320, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: Color.fromRGBO(128, 206, 215, 1)),
+                        side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
                       ),
                     ),
                   ),
                   ElevatedButton.icon(
                     onPressed: () => _toggleButtonState(3),
                     icon: Icon(Icons.location_on, size: 24),
-                    label: Text("Share Location"),
+                    label: Text("Share Location", style: TextStyle(fontSize: 17),),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _buttonStates[3] ? Color.fromRGBO(196, 174, 247, 1) : Colors.transparent,
-                      foregroundColor: _buttonStates[3] ? Color.fromARGB(255, 45, 45, 45) : Color.fromRGBO(196, 174, 247, 1),
+                      backgroundColor: _buttonStates[3] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 45, 45, 45),
+                      foregroundColor: _buttonStates[3] ? Color.fromARGB(255, 45, 45, 45) : Color.fromARGB(255, 255, 255, 255),
                       minimumSize: Size(320, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: Color.fromRGBO(196, 174, 247, 1)),
+                        side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
                       ),
                     )
                   )
