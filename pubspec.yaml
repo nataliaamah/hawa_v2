@@ -37,6 +37,7 @@ flutter:
     - assets/images/hawa_name.png
     - assets/images/natalia.png
     - assets/images/illaila.png
+    - assets/images/afiqah.png
   fonts:
     - family : Roboto
       fonts:
