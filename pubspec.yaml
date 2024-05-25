@@ -17,6 +17,7 @@ dependencies:
   smooth_page_indicator : ^1.1.0
   cloud_firestore: ^4.17.4
   google_fonts : ^6.2.1
+  url_launcher : ^6.2.6
 
 dev_dependencies:
   flutter_test:
@@ -38,6 +39,7 @@ flutter:
     - assets/images/natalia.png
     - assets/images/illaila.png
     - assets/images/afiqah.png
+    - assets/images/aliah.png
   fonts:
     - family : Roboto
       fonts:

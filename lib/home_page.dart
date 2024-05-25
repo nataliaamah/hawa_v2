@@ -88,7 +88,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.only(right: 8, left: 250),
+                  padding: EdgeInsets.only(right: 8, left: 260),
                   child: IconButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Profile clicked")));

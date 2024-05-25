@@ -62,7 +62,7 @@ class AboutUsPage extends StatelessWidget {
                       ),
                       _buildProfile(
                         context,
-                        image: 'assets/images/illaila.png',
+                        image: 'assets/images/aliah.png',
                         name: 'Aliah Anisah',
                         role: 'Project Manager',
                       ),

@@ -1,88 +1,115 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactUsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: EdgeInsets.only(left: 24, top: 24),
-          child: IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              color: Color.fromRGBO(255, 255, 255, 1),
-              size: 25,
+      body: CustomScrollView(
+        slivers: <Widget>[
+          SliverAppBar(
+            expandedHeight: 80.0,
+            floating: false,
+            pinned: true,
+            backgroundColor: Color.fromARGB(255, 10, 38, 39),
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: EdgeInsets.only(left: 150, bottom: 20),
+              title: Text(
+                "Contact Us",
+                style: TextStyle(color: Colors.white, fontSize: 16.0),
+              ),
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            leading: Padding(
+              padding: EdgeInsets.only(left: 24, top: 24),
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: Color.fromRGBO(255, 255, 255, 1),
+                  size: 25,
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ),
           ),
-        ),
-        title: Padding(
-          padding: EdgeInsets.only(top: 38,left: 75),
-          child: Text(
-          "Contact Us",
-          style: TextStyle(color: Colors.white, fontSize: 20.0),
-        ),
-        )
-      ),
-      body: Center(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 80,),
-            Padding(
-              padding: EdgeInsets.only(left: 30, right: 30),
-              child : _buildContact(
-                context,
-                title: 'GitHub',
-                description:
-                    'https://github.com/nataliaamah/hawa_v2',
+          SliverList(
+            delegate: SliverChildListDelegate(
+              [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(left: 30, right: 30),
+                        child : Text("Feel free to contact us to ask questions about our app!", style: TextStyle(color: Color.fromRGBO(255, 255, 255, 1)),),
+                      ),
+                      SizedBox(height: 50,),
+                      Padding(
+                        padding: EdgeInsets.only(left: 30, right: 30),
+                        child: _buildContact(
+                          context,
+                          title: 'GitHub',
+                          description: 'https://github.com/nataliaamah/hawa_v2',
+                          link: true,
+                        ),
+                      ),
+                      SizedBox(height: 30,),
+                      Padding(
+                        padding: EdgeInsets.only(left: 30, right: 30),
+                        child: _buildContact(
+                          context,
+                          title: 'Email',
+                          description: 'ameranataliamah@gmail.com\nillailanadiah@gmail.com\nafiqahrahim@gmail.com\taliahanisah@gmail.com',
+                          link: false,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            ),
-            SizedBox(height: 40,),
-            Padding(
-              padding: EdgeInsets.only(left: 30, right: 30),
-              child : _buildContact(
-                context,
-                title: 'Instagram',
-                description:
-                    'https://instagram.com/nataliaamah',
-            ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildContact(BuildContext context, {required String title, required String description}) {
-    return Column(
+  Widget _buildContact(BuildContext context, {required String title, required String description, bool link = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: GoogleFonts.quicksand(
-              textStyle: TextStyle(
-                fontSize: 20,
-                color: Color.fromARGB(255, 255, 255, 255),
-                fontWeight: FontWeight.w500,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color.fromRGBO(255, 255, 255, 1)),
+          ),
+          SizedBox(height: 10,),
+          GestureDetector(
+            onTap: link
+                ? () async {
+                    if (await canLaunch(description)) {
+                      await launch(description);
+                    } else {
+                      throw 'Could not launch $description';
+                    }
+                  }
+                : null,
+            child: Text(
+              description,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: link ? Colors.blue : const Color.fromARGB(255, 255, 255, 255),
+                decoration: link ? TextDecoration.underline : TextDecoration.none,
               ),
             ),
           ),
-          SizedBox(height: 5),
-          Text(
-            description,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w300,
-              color: Color.fromARGB(255, 255, 255, 255),
-            ),
-          ),
         ],
-      );
+      ),
+    );
   }
 }
