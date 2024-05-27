@@ -32,7 +32,12 @@ class _LoginPageState extends State<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage(title: "Home Page", fullName: fullName)),
+          MaterialPageRoute(
+            builder: (context) => HomePage(
+              fullName: fullName,
+              userId: user.uid,
+            ),
+          ),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -94,18 +99,31 @@ class _LoginPageState extends State<LoginPage> {
                     text: TextSpan(
                       children: [
                         WidgetSpan(
-                          child : Padding(
-                            padding:EdgeInsets.only(left: 50, bottom: 0),
-                            child :
-                              Text( "Login\n", style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 30.0, color: Color.fromRGBO(255, 255, 255, 1),)
-                            )
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 50, bottom: 0),
+                            child: Text(
+                              "Login\n",
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 30.0,
+                                color: Color.fromRGBO(255, 255, 255, 1),
+                              ),
                             ),
                           ),
+                        ),
                         WidgetSpan(
                           child: Padding(
                             padding: EdgeInsets.only(left: 50, top: 0),
-                            child: Text("Login to continue using the application", style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w300, fontSize: 14.0, color: Color.fromRGBO(255, 255, 255, 1),)
-                          )
+                            child: Text(
+                              "Login to continue using the application",
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontWeight: FontWeight.w300,
+                                fontSize: 14.0,
+                                color: Color.fromRGBO(255, 255, 255, 1),
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -119,7 +137,7 @@ class _LoginPageState extends State<LoginPage> {
               _buildPasswordSection(context),
               SizedBox(height: 30.0),
               if (errorMessage.isNotEmpty)
-              Padding(
+                Padding(
                   padding: const EdgeInsets.only(bottom: 20.0, left: 50, right: 35),
                   child: Text(
                     errorMessage,
@@ -129,9 +147,9 @@ class _LoginPageState extends State<LoginPage> {
               Container(
                 width: 200.0,
                 decoration: BoxDecoration(
-                  color: Color(0xFF9CE1CF), 
+                  color: Color(0xFF9CE1CF),
                   borderRadius: BorderRadius.circular(40),
-                  border: Border.all(color: Color.fromARGB(255, 122, 185, 168)), 
+                  border: Border.all(color: Color.fromARGB(255, 122, 185, 168)),
                 ),
                 child: OutlinedButton(
                   onPressed: signIn,
@@ -139,7 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    side: BorderSide(color: Colors.transparent), 
+                    side: BorderSide(color: Colors.transparent),
                   ),
                   child: Text(
                     "Login",
@@ -147,34 +165,33 @@ class _LoginPageState extends State<LoginPage> {
                       fontFamily: 'Roboto',
                       fontWeight: FontWeight.w700,
                       fontSize: 16.0,
-                      color: Color.fromRGBO(37, 37, 37, 1), 
+                      color: Color.fromRGBO(37, 37, 37, 1),
                     ),
                   ),
                 ),
               ),
               Padding(
-              padding: EdgeInsets.only(top: 20),
-              child : GestureDetector(
-                onTap: navigateToSignUp,
-                child: Text(
-                  "Create an account",
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w300,
-                    fontSize: 14,
-                    decoration: TextDecoration.underline,
-                    decorationColor: Color.fromRGBO(198, 205, 250, 1),
-                    color: Color.fromRGBO(198, 205, 250, 1),
+                padding: EdgeInsets.only(top: 20),
+                child: GestureDetector(
+                  onTap: navigateToSignUp,
+                  child: Text(
+                    "Create an account",
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w300,
+                      fontSize: 14,
+                      decoration: TextDecoration.underline,
+                      decorationColor: Color.fromRGBO(198, 205, 250, 1),
+                      color: Color.fromRGBO(198, 205, 250, 1),
+                    ),
                   ),
                 ),
               ),
-              ),
-            ]
-            ),
-        )
+            ],
+          ),
         ),
-      );
-    }
+      ),
+    );
   }
 
   Widget _buildEmailSection(BuildContext context) {
@@ -207,10 +224,9 @@ class _LoginPageState extends State<LoginPage> {
         SizedBox(height: 10.0),
         _buildTextFormField(
           controller: passwordController,
-          prefixIcon: Icon(Icons.password_outlined, color:Color(0xFF9CE1CF)),
+          prefixIcon: Icon(Icons.password_outlined, color: Color(0xFF9CE1CF)),
           hintText: "Enter password",
           obscureText: true,
-
         ),
       ],
     );
@@ -231,7 +247,7 @@ class _LoginPageState extends State<LoginPage> {
         decoration: InputDecoration(
           prefixIcon: prefixIcon,
           hintText: hintText,
-          hintStyle:TextStyle(color:Color.fromRGBO(195, 195, 195, 1), fontFamily: 'Roboto', fontWeight: FontWeight.w300),
+          hintStyle: TextStyle(color: Color.fromRGBO(195, 195, 195, 1), fontFamily: 'Roboto', fontWeight: FontWeight.w300),
           filled: true,
           fillColor: Color.fromARGB(255, 52, 81, 82),
           enabledBorder: OutlineInputBorder(
@@ -247,4 +263,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
+}

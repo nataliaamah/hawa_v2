@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import the Firebase Auth package
 import 'firebase_service.dart';
 import 'home_page.dart';
 import 'login_page.dart';
@@ -50,19 +51,29 @@ class _SignUp3State extends State<SignUp3> {
 
         FirebaseService firebaseService = FirebaseService();
         try {
-          await firebaseService.signUpWithEmail(emailController.text, passwordController.text, userData);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Sign up Successful!')),
+          UserCredential userCredential = await firebaseService.signUpWithEmail(
+            emailController.text,
+            passwordController.text,
+            userData
           );
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HomePage(
-                title: "Home",
-                fullName: widget.fullName,
+
+          User? user = userCredential.user;
+
+          if (user != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Sign up Successful!')),
+            );
+
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomePage(
+                  fullName: widget.fullName,
+                  userId: user.uid,
+                ),
               ),
-            ),
-          );
+            );
+          }
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Sign up failed: $e')),

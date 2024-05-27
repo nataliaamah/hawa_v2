@@ -19,12 +19,13 @@ class HawaApp extends StatefulWidget {
   @override
   _HawaAppState createState() => _HawaAppState();
   final bool seenOnboard;
-  const HawaApp({super.key, required this.seenOnboard});
+  const HawaApp({Key? key, required this.seenOnboard}) : super(key: key);
 }
 
 class _HawaAppState extends State<HawaApp> {
   bool _seenOnboard = false;
   String? fullName;
+  String? userId;
 
   @override
   void initState() {
@@ -47,6 +48,7 @@ class _HawaAppState extends State<HawaApp> {
       DocumentSnapshot userData = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
       setState(() {
         fullName = userData['fullName'];
+        userId = user.uid;
       });
     }
   }
@@ -57,7 +59,7 @@ class _HawaAppState extends State<HawaApp> {
       title: 'Hawa v1',
       home: _seenOnboard
           ? (FirebaseAuth.instance.currentUser != null && fullName != null
-              ? HomePage(title: 'Hawa', fullName: fullName!)
+              ? HomePage(fullName: fullName!, userId: userId!)
               : LoginPage())
           : Onboarding(
               onCompleted: () async {

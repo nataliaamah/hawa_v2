@@ -1,16 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hawa_v1/login_page.dart';
+import 'package:hawa_v1/profile_page.dart';
 import 'half_circle_painter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'about_us.dart';
 import 'contact_us.dart';
+import 'profile_page.dart';
 
 class HomePage extends StatefulWidget {
-  final String title;
   final String fullName;
+  final String userId;
 
-  HomePage({required this.title, required this.fullName});
+  HomePage({required this.fullName, required this.userId});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -56,7 +58,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     String firstName = getFirstName(widget.fullName);
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 45, 45, 45),
+      backgroundColor: const Color.fromARGB(255, 10, 38, 39),
       appBar: AppBar(
         backgroundColor: Colors.teal[700],
         elevation: 0,
@@ -84,16 +86,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     onTap: () {
                       Scaffold.of(context).openDrawer();
                     },
-                    child: Icon(Icons.menu_rounded, color: Color.fromARGB(255, 45, 45, 45), size: 40),
+                    child: Icon(Icons.menu_rounded, color: Color.fromARGB(255, 10, 38, 39), size: 40),
                   ),
                 ),
                 Padding(
                   padding: EdgeInsets.only(right: 8, left: 260),
                   child: IconButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Profile clicked")));
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=> ProfilePage(userId: widget.userId)));
                     },
-                    icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromARGB(255, 45, 45, 45)),
+                    icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromARGB(255, 10, 38, 39)),
                   ),
                 ),
               ],
@@ -161,8 +163,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           icon: Icon(Icons.phone, size: 24),
                           label: Text("Call", style: TextStyle(fontSize: 17)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _buttonStates[0] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 45, 45, 45),
-                            foregroundColor: _buttonStates[0] ? Color.fromARGB(255, 45, 45, 45) : Color.fromARGB(255, 255, 255, 255),
+                            backgroundColor: _buttonStates[0] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
+                            foregroundColor: _buttonStates[0] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
                             minimumSize: Size(152.5, 50),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -175,8 +177,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           icon: Icon(Icons.camera_alt, size: 24),
                           label: Text("Camera", style: TextStyle(fontSize: 17)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _buttonStates[1] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 45, 45, 45),
-                            foregroundColor: _buttonStates[1] ? Color.fromARGB(255, 45, 45, 45) : Color.fromARGB(255, 255, 255, 255),
+                            backgroundColor: _buttonStates[1] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
+                            foregroundColor: _buttonStates[1] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
                             minimumSize: Size(152.5, 50),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -189,8 +191,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           icon: Icon(Icons.vibration, size: 24),
                           label: Text("Detect Shake", style: TextStyle(fontSize: 17)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _buttonStates[2] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 45, 45, 45),
-                            foregroundColor: _buttonStates[2] ? Color.fromARGB(255, 45, 45, 45) : Color.fromARGB(255, 255, 255, 255),
+                            backgroundColor: _buttonStates[2] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
+                            foregroundColor: _buttonStates[2] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
                             minimumSize: Size(320, 50),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -203,8 +205,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           icon: Icon(Icons.location_on, size: 24),
                           label: Text("Share Location", style: TextStyle(fontSize: 17)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _buttonStates[3] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 45, 45, 45),
-                            foregroundColor: _buttonStates[3] ? Color.fromARGB(255, 45, 45, 45) : Color.fromARGB(255, 255, 255, 255),
+                            backgroundColor: _buttonStates[3] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
+                            foregroundColor: _buttonStates[3] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
                             minimumSize: Size(320, 50),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
