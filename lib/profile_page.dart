@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'profile_painter.dart';
+import 'edit_profile.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
@@ -35,7 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 10, 38, 39),
       appBar: AppBar(
-        backgroundColor: Colors.teal[700],
+        backgroundColor: Color.fromARGB(255, 10, 38, 39),
         elevation: 0,
         automaticallyImplyLeading: false,
         centerTitle: true,
@@ -81,13 +82,27 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       SizedBox(height: 10),
-                      Center(
-                        child: Text(
-                          'Edit Profile',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.teal[200],
-                            decoration: TextDecoration.underline,
+                      GestureDetector(
+                        onTap: () async {
+                          // Navigate to EditProfilePage and wait for the result
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProfilePage(userId: widget.userId),
+                            ),
+                          );
+                          // Reload the user data after returning from EditProfilePage
+                          fetchUserData();
+                        },
+                        child: Center(
+                          child: Text(
+                            'Edit Profile',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.teal[200],
+                              decoration: TextDecoration.underline,
+                              decorationColor: Colors.teal[200],
+                            ),
                           ),
                         ),
                       ),
@@ -131,7 +146,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Column(
@@ -142,7 +157,7 @@ class _ProfilePageState extends State<ProfilePage> {
             style: TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
           ),
           Text(
-            value,
+            value ?? '-',
             style: TextStyle(fontSize: 16, color: Colors.black54),
           ),
         ],
