@@ -170,6 +170,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
+  Future<void> _callEmergencyNumber() async {
+    final Uri emergencyUri = Uri(scheme: 'tel', path: '999');
+    if (await canLaunchUrl(emergencyUri)) {
+      await launchUrl(emergencyUri);
+    } else {
+      logger.e('Could not launch $emergencyUri');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String firstName = getFirstName(widget.fullName);
@@ -235,7 +244,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: (){},
+                      onPressed: () async {
+                        await _callEmergencyNumber();
+                      },
                       child: Text(
                         'S.O.S',
                         style: GoogleFonts.quicksand(
