@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hawa_v1/login_page.dart';
 import 'package:hawa_v1/profile_page.dart';
@@ -7,6 +8,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'about_us.dart';
 import 'contact_us.dart';
 import 'profile_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:logger/logger.dart';
+import 'package:camera/camera.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:telephony/telephony.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 
 class HomePage extends StatefulWidget {
   final String fullName;
@@ -22,16 +34,24 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   double _glowRadius = 10.0;
   late Timer _timer;
   List<bool> _buttonStates = [false, false, false, false];
+  String _emergencyNumber = "";
+  final Logger logger = Logger(); // Initialize the logger
+  late CameraController _cameraController;
+  late Future<void> _initializeControllerFuture;
+  final Telephony telephony = Telephony.instance;
 
   @override
   void initState() {
     super.initState();
     _startGlowAnimation();
+    _fetchEmergencyNumber();
+    _initializeCamera();
   }
 
   @override
   void dispose() {
     _timer.cancel();
+    _cameraController.dispose();
     super.dispose();
   }
 
@@ -51,6 +71,103 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   String getFirstName(String fullName) {
     return fullName.split(' ')[0];
+  }
+
+  void _fetchEmergencyNumber() async {
+    logger.d('Fetching emergency contact number for user ID: ${widget.userId}');
+    try {
+      DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
+      if (documentSnapshot.exists) {
+        logger.d('Document exists for user ID: ${widget.userId}');
+        var contactNumber = documentSnapshot['contactNumber'];
+        if (contactNumber != null && contactNumber is String && contactNumber.isNotEmpty) {
+          setState(() {
+            _emergencyNumber = contactNumber.startsWith('+') ? contactNumber : '+$contactNumber';
+          });
+          logger.d('Fetched emergency number: $_emergencyNumber');
+        } else {
+          logger.w('Contact number is null or empty');
+        }
+      } else {
+        logger.w('Document does not exist for user ID: ${widget.userId}');
+      }
+    } catch (e) {
+      logger.e('Error fetching emergency contact: $e');
+    }
+  }
+
+  Future<void> _initiateCall() async {
+    if (_emergencyNumber.isNotEmpty) {
+      final Uri url = Uri(scheme: 'tel', path: _emergencyNumber);
+      logger.d('Attempting to launch $url');
+      var status = await Permission.phone.status;
+      if (!status.isGranted) {
+        logger.d('Phone permission not granted. Requesting permission.');
+        status = await Permission.phone.request();
+      }
+      if (status.isGranted) {
+        logger.d('Phone permission granted.');
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url);
+          logger.d('Launched $url successfully.');
+        } else {
+          logger.e('Could not launch $url');
+        }
+      } else {
+        logger.w('Phone call permission not granted.');
+      }
+    } else {
+      logger.w('Emergency number is empty.');
+    }
+  }
+
+  void _initializeCamera() async {
+    final cameras = await availableCameras();
+    final firstCamera = cameras.first;
+    _cameraController = CameraController(firstCamera, ResolutionPreset.high);
+    _initializeControllerFuture = _cameraController.initialize();
+  }
+
+  Future<void> _takePicture() async {
+    try {
+      await _initializeControllerFuture;
+      final image = await _cameraController.takePicture();
+      final directory = await getApplicationDocumentsDirectory();
+      final imagePath = path.join(directory.path, '${DateTime.now()}.png');
+      await image.saveTo(imagePath);
+      logger.d('Picture saved to $imagePath');
+      final imageUrl = await _uploadImageToCloudStorage(imagePath);
+      logger.d('Image uploaded to $imageUrl');
+      await _sendSMSWithPicture(imageUrl);
+    } catch (e) {
+      logger.e('Error taking picture: $e');
+    }
+  }
+
+  Future<String> _uploadImageToCloudStorage(String imagePath) async {
+    File file = File(imagePath);
+    String fileName = path.basename(file.path);
+    Reference storageReference = FirebaseStorage.instance.ref().child('images/$fileName');
+    UploadTask uploadTask = storageReference.putFile(file);
+    await uploadTask;
+    String returnURL = await storageReference.getDownloadURL();
+    return returnURL;
+  }
+
+  Future<void> _sendSMSWithPicture(String imageUrl) async {
+    bool? permissionsGranted = await telephony.requestPhoneAndSmsPermissions;
+    if (permissionsGranted ?? false) {
+      telephony.sendSms(
+        to: _emergencyNumber,
+        message: 'Emergency! Here is the picture: $imageUrl',
+      ).then((_) {
+        logger.d('SMS sent successfully with image URL: $imageUrl');
+      }).catchError((error) {
+        logger.e('Failed to send SMS: $error');
+      });
+    } else {
+      logger.w('SMS permission not granted.');
+    }
   }
 
   @override
@@ -93,7 +210,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   padding: EdgeInsets.only(right: 8, left: 260),
                   child: IconButton(
                     onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=> ProfilePage(userId: widget.userId)));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)));
                     },
                     icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromARGB(255, 10, 38, 39)),
                   ),
@@ -118,7 +235,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: (){},
                       child: Text(
                         'S.O.S',
                         style: GoogleFonts.quicksand(
@@ -159,7 +276,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       runSpacing: 15,
                       children: [
                         ElevatedButton.icon(
-                          onPressed: () => _toggleButtonState(0),
+                          onPressed: () => _initiateCall(),
                           icon: Icon(Icons.phone, size: 24),
                           label: Text("Call", style: TextStyle(fontSize: 17)),
                           style: ElevatedButton.styleFrom(
@@ -173,7 +290,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           ),
                         ),
                         ElevatedButton.icon(
-                          onPressed: () => _toggleButtonState(1),
+                          onPressed: () => _takePicture(),
                           icon: Icon(Icons.camera_alt, size: 24),
                           label: Text("Camera", style: TextStyle(fontSize: 17)),
                           style: ElevatedButton.styleFrom(
