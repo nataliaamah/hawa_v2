@@ -19,6 +19,7 @@ import 'package:path/path.dart' as path;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:telephony/telephony.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 class HomePage extends StatefulWidget {
   final String fullName;
@@ -39,6 +40,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late CameraController _cameraController;
   late Future<void> _initializeControllerFuture;
   final Telephony telephony = Telephony.instance;
+  bool _isShakeDetectionActive = false;
+  bool _emergencyMessageSent = false;
+  late StreamSubscription<GyroscopeEvent> _gyroscopeSubscription;
 
   @override
   void initState() {
@@ -51,6 +55,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   void dispose() {
     _timer.cancel();
+    _gyroscopeSubscription.cancel();
     _cameraController.dispose();
     super.dispose();
   }
@@ -179,6 +184,32 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
+  void _startShakeDetection() {
+    _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent event) {
+      final double shakeThreshold = 2.5; // Adjust this value based on your requirements
+      if (!_emergencyMessageSent && (event.x.abs() > shakeThreshold || event.y.abs() > shakeThreshold || event.z.abs() > shakeThreshold)) {
+        _sendEmergencyMessage();
+        _emergencyMessageSent = true;
+      }
+    });
+  }
+
+  void _sendEmergencyMessage() async {
+    bool? permissionsGranted = await telephony.requestPhoneAndSmsPermissions;
+    if (permissionsGranted ?? false) {
+      telephony.sendSms(
+        to: _emergencyNumber,
+        message: "Emergency! This is Hawa Emergency Services. A large movement was detected from " + getFirstName(widget.fullName) +", indicating a potential emergency. Please contact me immediately.",
+      ).then((_) {
+        logger.d('Emergency SMS sent successfully.');
+      }).catchError((error) {
+        logger.e('Failed to send emergency SMS: $error');
+      });
+    } else {
+      logger.w('SMS permission not granted.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String firstName = getFirstName(widget.fullName);
@@ -215,8 +246,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     child: Icon(Icons.menu_rounded, color: Color.fromARGB(255, 10, 38, 39), size: 40),
                   ),
                 ),
+                Spacer(),
                 Padding(
-                  padding: EdgeInsets.only(right: 8, left: 260),
+                  padding: EdgeInsets.only(right: 20),
                   child: IconButton(
                     onPressed: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)));
@@ -245,6 +277,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     ),
                     child: ElevatedButton(
                       onPressed: () async {
+                        await _takePicture();
                         await _callEmergencyNumber();
                       },
                       child: Text(
@@ -315,7 +348,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           ),
                         ),
                         ElevatedButton.icon(
-                          onPressed: () => _toggleButtonState(2),
+                          onPressed: () {
+                            setState(() {
+                              _isShakeDetectionActive = !_isShakeDetectionActive;
+                              if (_isShakeDetectionActive) {
+                                _startShakeDetection();
+                              } else {
+                                _gyroscopeSubscription.cancel();
+                                _emergencyMessageSent = false; // Reset the message sent flag
+                              }
+                              _toggleButtonState(2);
+                            });
+                          },
                           icon: Icon(Icons.vibration, size: 24),
                           label: Text("Detect Shake", style: TextStyle(fontSize: 17)),
                           style: ElevatedButton.styleFrom(

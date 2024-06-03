@@ -26,6 +26,7 @@ dependencies:
   telephony: ^0.2.0
   firebase_storage: ^11.7.7
   firebase_app_check: ^0.2.2+7
+  sensors_plus: ^5.0.1
 
 dev_dependencies:
   flutter_test:
