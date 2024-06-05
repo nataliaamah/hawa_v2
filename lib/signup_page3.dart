@@ -47,6 +47,7 @@ class _SignUp3State extends State<SignUp3> {
           'email': emailController.text,
           'contactName': widget.contactName,
           'contactNumber': widget.contactNumber,
+          'role': 'user', // Automatically set role to 'user'
         };
 
         FirebaseService firebaseService = FirebaseService();
@@ -95,6 +96,7 @@ class _SignUp3State extends State<SignUp3> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: const Color.fromARGB(255, 10, 38, 39),
         body: SingleChildScrollView(
           child: Container(
             width: double.maxFinite,
@@ -402,10 +404,5 @@ class _SignUp3State extends State<SignUp3> {
         ],
       ),
     );
-  }
-
-  void backToLogin(BuildContext context) {
-    Navigator.push(context,
-      MaterialPageRoute(builder: (context) => LoginPage()));
   }
 }

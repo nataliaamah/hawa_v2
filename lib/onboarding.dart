@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:hawa_v1/login_page.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hawa_v1/home_page.dart';
 
 class Onboarding extends StatelessWidget {
   final VoidCallback onCompleted;
@@ -319,7 +320,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           )
         ),
       
-      // Show 'Next' or 'Done' button based on currentPageIndex
+
       if (_currentPageIndex == 0)
         GestureDetector(
           onTap: () {
@@ -357,10 +358,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
       else
         TextButton(
           onPressed: () {
-            Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => LoginPage()),
-          );
+            Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => HomePage(
+                          fullName: 'Guest',
+                          userId: '',
+                          isAuthenticated: false,
+                        ),
+                      ),
+                    );
           },
           child: Text('Next', style: TextStyle(fontSize: 18, fontFamily: "Roboto", fontWeight: FontWeight.w400, color: Color.fromRGBO(255, 255, 255, 1))),
           style: TextButton.styleFrom(

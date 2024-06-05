@@ -54,6 +54,7 @@ class _SignUpState extends State<SignUp>{
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: const Color.fromARGB(255, 10, 38, 39),
         body: SingleChildScrollView(
           child: Container(
             width: double.maxFinite,

@@ -7,7 +7,7 @@ import 'half_circle_painter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'about_us.dart';
 import 'contact_us.dart';
-import 'profile_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -20,12 +20,14 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:telephony/telephony.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:hawa_v1/staff_login.dart';
 
 class HomePage extends StatefulWidget {
   final String fullName;
   final String userId;
+  final bool isAuthenticated;
 
-  HomePage({required this.fullName, required this.userId});
+  HomePage({required this.fullName, required this.userId, this.isAuthenticated = false});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -42,12 +44,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   final Telephony telephony = Telephony.instance;
   bool _emergencyMessageSent = false;
   late StreamSubscription<GyroscopeEvent> _gyroscopeSubscription;
+  bool _isAuthenticated = false;
+  Completer<void>? _popupCompleter;
 
   static const platform = MethodChannel('com.example.tesr/location');
 
   @override
   void initState() {
     super.initState();
+    _isAuthenticated = widget.isAuthenticated;
     _startGlowAnimation();
     _fetchEmergencyNumber();
     _initializeCamera();
@@ -103,7 +108,55 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
+  Future<void> _showLoginRequiredDialog() async {
+    _popupCompleter = Completer<void>();
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Feature Locked'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('This feature is locked.'),
+                Text('Please log in or sign up to access it.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Login'),
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginPage())).then((_) {
+                  if (!_popupCompleter!.isCompleted) {
+                    _popupCompleter!.complete();
+                  }
+                });
+              },
+            ),
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                if (!_popupCompleter!.isCompleted) {
+                  _popupCompleter!.complete();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+    await _popupCompleter!.future;
+  }
+
   Future<void> _initiateCall() async {
+    if (!_isAuthenticated) {
+      await _showLoginRequiredDialog();
+      return;
+    }
+
     if (_emergencyNumber.isNotEmpty) {
       final Uri url = Uri(scheme: 'tel', path: _emergencyNumber);
       logger.d('Attempting to launch $url');
@@ -136,6 +189,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _takePicture() async {
+    if (!_isAuthenticated) {
+      await _showLoginRequiredDialog();
+      return;
+    }
+
     try {
       await _initializeControllerFuture;
       final image = await _cameraController.takePicture();
@@ -162,6 +220,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _sendSMSWithPicture(String imageUrl) async {
+    if (!_isAuthenticated) {
+      await _showLoginRequiredDialog();
+      return;
+    }
+
     bool? permissionsGranted = await telephony.requestPhoneAndSmsPermissions;
     if (permissionsGranted ?? false) {
       telephony.sendSms(
@@ -197,6 +260,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _sendEmergencyMessage() async {
+    if (!_isAuthenticated) {
+      await _showLoginRequiredDialog();
+      return;
+    }
+
     bool? permissionsGranted = await telephony.requestPhoneAndSmsPermissions;
     if (permissionsGranted ?? false) {
       telephony.sendSms(
@@ -253,7 +321,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   padding: EdgeInsets.only(right: 20),
                   child: IconButton(
                     onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId, isAuthenticated: widget.isAuthenticated,)));
                     },
                     icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromARGB(255, 10, 38, 39)),
                   ),
@@ -279,7 +347,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     ),
                     child: ElevatedButton(
                       onPressed: () async {
-                       
+                        if (!_isAuthenticated) {
+                          await _showLoginRequiredDialog();
+                        } else {
+                          // SOS button action
+                        }
                       },
                       child: Text(
                         'S.O.S',
@@ -368,9 +440,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           ),
                         ),
                       ),
-
-
-
                       ],
                     ),
                   ],
@@ -415,15 +484,31 @@ class AppDrawer extends StatelessWidget {
               Navigator.push(context, MaterialPageRoute(builder: (context) => ContactUsPage()));
             },
           ),
-          SizedBox(height: 350,),
+          SizedBox(height: 300,),
+          ListTile(
+            contentPadding: EdgeInsets.only(left: 50),
+            title: Text('Staff Page', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1),),),
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => StaffLoginPage()));
+            },
+          ),
           ListTile(
             leading: Icon(Icons.logout_rounded, size: 25, color: Color.fromRGBO(255, 255, 255, 1),),
             contentPadding: EdgeInsets.only(left: 50),
             title: Text('Logout', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1),),),
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+              // Sign out the user
+              FirebaseAuth.instance.signOut().then((_) {
+                // Navigate to HomePage with limited functionalities
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomePage(isAuthenticated: false, fullName: 'Guest', userId: '',)),
+                  (route) => false, // Remove all previous routes
+                );
+              });
             },
           ),
+          
         ],
       ),
     );

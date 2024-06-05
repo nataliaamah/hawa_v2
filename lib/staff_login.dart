@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:hawa_v1/home_page.dart';
-import 'package:hawa_v1/signup_page.dart';
+import 'staff_page.dart';
 
 TextEditingController emailController = TextEditingController();
 TextEditingController passwordController = TextEditingController();
 
-class LoginPage extends StatefulWidget {
+class StaffLoginPage extends StatefulWidget {
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _StaffLoginPageState createState() => _StaffLoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _StaffLoginPageState extends State<StaffLoginPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String errorMessage = '';
@@ -27,18 +26,38 @@ class _LoginPageState extends State<LoginPage> {
 
       if (user != null) {
         DocumentSnapshot userData = await _firestore.collection('users').doc(user.uid).get();
-        String fullName = userData['fullName'];
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(
-              fullName: fullName,
-              userId: user.uid,
-              isAuthenticated: true, // ensure isAuthenticated is true after login
-            ),
-          ),
-        );
+        if (userData.exists && userData.data() != null) {
+          String role = userData['role'] ?? '';
+
+          if (role == 'staff') {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Staff Login Successful"),
+                  content: Text("Welcome"),
+                  actions: [
+                    TextButton(
+                      child: Text("OK"),
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Close the dialog
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          } else {
+            setState(() {
+              errorMessage = 'Access denied: You are not a staff member.';
+            });
+          }
+        } else {
+          setState(() {
+            errorMessage = 'No data found for this user.';
+          });
+        }
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -73,13 +92,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void navigateToSignUp() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => SignUp()), // Change to sign up page later
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -90,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
           leading: IconButton(
             icon: Image.asset('assets/images/backArrow.png'),
             onPressed: () {
-              Navigator.pop(context, 'from_login_page');
+              Navigator.pop(context);
             },
           ),
           backgroundColor: Colors.transparent,
@@ -113,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Padding(
                             padding: EdgeInsets.only(left: 30, bottom: 0),
                             child: Text(
-                              "Login\n",
+                              "Staff Login\n",
                               style: TextStyle(
                                 fontFamily: 'Roboto',
                                 fontWeight: FontWeight.w700,
@@ -127,7 +139,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Padding(
                             padding: EdgeInsets.only(left: 30, top: 0),
                             child: Text(
-                              "Login to continue using the application",
+                              "Login to access staff page",
                               style: TextStyle(
                                 fontFamily: 'Roboto',
                                 fontWeight: FontWeight.w300,
@@ -178,23 +190,6 @@ class _LoginPageState extends State<LoginPage> {
                       fontWeight: FontWeight.w700,
                       fontSize: 16.0,
                       color: Color.fromRGBO(37, 37, 37, 1),
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(top: 20),
-                child: GestureDetector(
-                  onTap: navigateToSignUp,
-                  child: Text(
-                    "Create an account",
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w300,
-                      fontSize: 14,
-                      decoration: TextDecoration.underline,
-                      decorationColor: Color.fromRGBO(198, 205, 250, 1),
-                      color: Color.fromRGBO(198, 205, 250, 1),
                     ),
                   ),
                 ),
