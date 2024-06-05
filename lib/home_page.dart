@@ -11,15 +11,15 @@ import 'profile_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:permission_handler/permission_handler.dart' as perm;
 import 'package:logger/logger.dart';
 import 'package:camera/camera.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:telephony/telephony.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:flutter/services.dart';
 
 class HomePage extends StatefulWidget {
   final String fullName;
@@ -40,9 +40,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late CameraController _cameraController;
   late Future<void> _initializeControllerFuture;
   final Telephony telephony = Telephony.instance;
-  bool _isShakeDetectionActive = false;
   bool _emergencyMessageSent = false;
   late StreamSubscription<GyroscopeEvent> _gyroscopeSubscription;
+
+  static const platform = MethodChannel('com.example.tesr/location');
 
   @override
   void initState() {
@@ -50,6 +51,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _startGlowAnimation();
     _fetchEmergencyNumber();
     _initializeCamera();
+    _startShakeDetection(); // Start shake detection when the home page is opened
   }
 
   @override
@@ -105,10 +107,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (_emergencyNumber.isNotEmpty) {
       final Uri url = Uri(scheme: 'tel', path: _emergencyNumber);
       logger.d('Attempting to launch $url');
-      var status = await Permission.phone.status;
-      if (!status.isGranted) {
+      var status = await perm.Permission.phone.status;
+      if (status.isDenied || status.isRestricted || status.isPermanentlyDenied) {
         logger.d('Phone permission not granted. Requesting permission.');
-        status = await Permission.phone.request();
+        status = await perm.Permission.phone.request();
       }
       if (status.isGranted) {
         logger.d('Phone permission granted.');
@@ -232,7 +234,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         builder: (context) => Stack(
           children: [
             CustomPaint(
-              size: Size(MediaQuery.of(context).size.width, 200),
+              size: Size(MediaQuery.of(context).size.width, 250),
               painter: HalfCirclePainter(Colors.teal[700]!),
             ),
             Row(
@@ -261,7 +263,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                SizedBox(height: 35), // Adjust the height accordingly
+                SizedBox(height: 70), // Adjust the height accordingly
                 Center(
                   child: AnimatedContainer(
                     duration: Duration(milliseconds: 1000),
@@ -277,16 +279,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     ),
                     child: ElevatedButton(
                       onPressed: () async {
-                        await _takePicture();
-                        await _callEmergencyNumber();
+                       
                       },
                       child: Text(
                         'S.O.S',
                         style: GoogleFonts.quicksand(
                           textStyle: TextStyle(
-                            color: Colors.teal[900], // Darker teal color for better contrast
+                            color: Colors.teal[900], 
                             fontWeight: FontWeight.w900,
-                            fontSize: 60, // Adjust font size for better readability
+                            fontSize: 60, 
                           ),
                         ),
                       ),
@@ -319,73 +320,57 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       spacing: 15,
                       runSpacing: 15,
                       children: [
-                        ElevatedButton.icon(
-                          onPressed: () => _initiateCall(),
-                          icon: Icon(Icons.phone, size: 24),
-                          label: Text("Call", style: TextStyle(fontSize: 17)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _buttonStates[0] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
-                            foregroundColor: _buttonStates[0] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
-                            minimumSize: Size(152.5, 50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
+                        ElevatedButton(
+                        onPressed: () => _initiateCall(),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.phone, size: 48),
+                            SizedBox(height: 4), // Add some space between the icon and the text
+                            Text(
+                              "Call\nEmergency\nContact",
+                              style: TextStyle(fontSize: 16),
+                              textAlign: TextAlign.center,
                             ),
+                          ],
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _buttonStates[0] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
+                          foregroundColor: _buttonStates[0] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
+                          minimumSize: Size(100, 150),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
                           ),
                         ),
-                        ElevatedButton.icon(
-                          onPressed: () => _takePicture(),
-                          icon: Icon(Icons.camera_alt, size: 24),
-                          label: Text("Camera", style: TextStyle(fontSize: 17)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _buttonStates[1] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
-                            foregroundColor: _buttonStates[1] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
-                            minimumSize: Size(152.5, 50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => _takePicture(),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.camera_alt, size: 48),
+                            SizedBox(height: 4), // Add some space between the icon and the text
+                            Text(
+                              "Take\nPicture",
+                              style: TextStyle(fontSize: 16),
+                              textAlign: TextAlign.center,
                             ),
+                          ],
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _buttonStates[1] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
+                          foregroundColor: _buttonStates[1] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
+                          minimumSize: Size(128, 150),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
                           ),
                         ),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _isShakeDetectionActive = !_isShakeDetectionActive;
-                              if (_isShakeDetectionActive) {
-                                _startShakeDetection();
-                              } else {
-                                _gyroscopeSubscription.cancel();
-                                _emergencyMessageSent = false; // Reset the message sent flag
-                              }
-                              _toggleButtonState(2);
-                            });
-                          },
-                          icon: Icon(Icons.vibration, size: 24),
-                          label: Text("Detect Shake", style: TextStyle(fontSize: 17)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _buttonStates[2] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
-                            foregroundColor: _buttonStates[2] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
-                            minimumSize: Size(320, 50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
-                            ),
-                          ),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: () => _toggleButtonState(3),
-                          icon: Icon(Icons.location_on, size: 24),
-                          label: Text("Share Location", style: TextStyle(fontSize: 17)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _buttonStates[3] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
-                            foregroundColor: _buttonStates[3] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
-                            minimumSize: Size(320, 50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
-                            ),
-                          ),
-                        ),
+                      ),
+
+
+
                       ],
                     ),
                   ],

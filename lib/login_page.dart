@@ -132,8 +132,9 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 10.0),
+              SizedBox(height: 30.0),
               _buildEmailSection(context),
+              SizedBox(height: 20,),
               _buildPasswordSection(context),
               SizedBox(height: 30.0),
               if (errorMessage.isNotEmpty)
@@ -200,7 +201,7 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         Text(
           "Email",
-          style: Theme.of(context).textTheme.titleMedium,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
         ),
         SizedBox(height: 10.0),
         _buildTextFormField(
@@ -219,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         Text(
           "Password",
-          style: Theme.of(context).textTheme.titleMedium,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
         ),
         SizedBox(height: 10.0),
         _buildTextFormField(
