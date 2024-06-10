@@ -21,6 +21,7 @@ import 'package:telephony/telephony.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:hawa_v1/staff_login.dart';
+import 'package:location/location.dart';
 
 class HomePage extends StatefulWidget {
   final String fullName;
@@ -203,7 +204,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       logger.d('Picture saved to $imagePath');
       final imageUrl = await _uploadImageToCloudStorage(imagePath);
       logger.d('Image uploaded to $imageUrl');
-      await _sendSMSWithPicture(imageUrl);
+      await _sendSMSWithPictureAndLocation(imageUrl);
     } catch (e) {
       logger.e('Error taking picture: $e');
     }
@@ -219,7 +220,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return returnURL;
   }
 
-  Future<void> _sendSMSWithPicture(String imageUrl) async {
+  Future<void> _sendSMSWithPictureAndLocation(String imageUrl) async {
     if (!_isAuthenticated) {
       await _showLoginRequiredDialog();
       return;
@@ -227,11 +228,35 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     bool? permissionsGranted = await telephony.requestPhoneAndSmsPermissions;
     if (permissionsGranted ?? false) {
+      Location location = new Location();
+
+      bool _serviceEnabled;
+      PermissionStatus _permissionGranted;
+      LocationData _locationData;
+
+      _serviceEnabled = await location.serviceEnabled();
+      if (!_serviceEnabled) {
+        _serviceEnabled = await location.requestService();
+        if (!_serviceEnabled) {
+          return;
+        }
+      }
+
+      _permissionGranted = await location.hasPermission();
+      if (_permissionGranted == PermissionStatus.denied) {
+        _permissionGranted = await location.requestPermission();
+        if (_permissionGranted != PermissionStatus.granted) {
+          return;
+        }
+      }
+
+      _locationData = await location.getLocation();
+
       telephony.sendSms(
         to: _emergencyNumber,
-        message: 'Emergency! Here is the picture: $imageUrl',
+        message: 'Emergency! Here is the picture: $imageUrl\nLocation: https://www.google.com/maps/search/?api=1&query=${_locationData.latitude},${_locationData.longitude}',
       ).then((_) {
-        logger.d('SMS sent successfully with image URL: $imageUrl');
+        logger.d('SMS sent successfully with image URL and location: $imageUrl');
       }).catchError((error) {
         logger.e('Failed to send SMS: $error');
       });
