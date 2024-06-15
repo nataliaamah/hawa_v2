@@ -100,8 +100,9 @@ class _LoginPageState extends State<LoginPage> {
           width: double.maxFinite,
           padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
+              SizedBox(height: 100,),
               Align(
                 alignment: Alignment.centerLeft,
                 child: SizedBox(

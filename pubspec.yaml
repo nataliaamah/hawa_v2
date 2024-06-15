@@ -58,6 +58,7 @@ flutter:
     - assets/images/illaila.png
     - assets/images/afiqah.png
     - assets/images/aliah.png
+    - assets/images/SOS.png
   fonts:
     - family : Roboto
       fonts:

@@ -123,7 +123,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                   controller : _pageViewController,
                   count: 4,
                   effect: ExpandingDotsEffect(
-                    activeDotColor: Color(0xFF9CE1CF),
+                    activeDotColor: Color.fromARGB(255, 255, 255, 255),
                     dotHeight: 10,
                     dotWidth: 10,
                   ),
@@ -140,26 +140,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
   Widget buildOnboardingTwo(BuildContext context){
     return SafeArea(
       child: Container(
+        color: Color.fromRGBO(86, 71, 135, 1),
         width: double.maxFinite,
         padding: EdgeInsets.symmetric(horizontal: 51, vertical: 92),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Spacer(flex: 1),
-            Image.asset('assets/images/location_onboard.png', height: 300, width: 300),
-            SizedBox(height: 10),
+            Image.asset('assets/images/SOS.png', height: 300, width: 300),
+            SizedBox(height: 30),
             Text(
-              "Share Your Location",
+              "SOS",
               style: GoogleFonts.quicksand(textStyle: TextStyle(fontSize: 24, color: const Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.w700)),
             ),
             SizedBox(height:10),
             Text(
-              "Hawa allows you to share your current location with trusted contacts from the app.",
+              "Hawa allows you to alert your local emergency services with a click of a button.",
               style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400, fontSize: 15),
               textAlign: TextAlign.center,
             ),
             Spacer(flex: 2),
-            SizedBox(height: 20),
+            SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.only(bottom: 30), // Adjust padding as needed
               child: SizedBox(
@@ -168,7 +169,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                   controller : _pageViewController,
                   count: 4,
                   effect: ExpandingDotsEffect(
-                    activeDotColor: Color(0xFF9CE1CF),
+                    activeDotColor: Color.fromARGB(255, 255, 255, 255),
                     dotHeight: 10,
                     dotWidth: 10,
                   ),
@@ -184,6 +185,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
   Widget buildOnboardingThree(BuildContext context){
     return SafeArea(
       child: Container(
+        color: Color.fromRGBO(152, 71, 62, 1),
         width: double.maxFinite,
         padding: EdgeInsets.symmetric(horizontal: 51, vertical: 92),
         child: Column(
@@ -191,7 +193,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           children: [
             Spacer(flex: 1),
             Image.asset('assets/images/snap_onboard.png', height: 300, width: 300),
-            SizedBox(height: 10),
+            SizedBox(height: 30),
             Text(
               "Capture Your Surroundings",
               style: GoogleFonts.quicksand(textStyle: TextStyle(fontSize: 24, color: const Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.w700)),
@@ -213,7 +215,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                   controller : _pageViewController,
                   count: 4,
                   effect: ExpandingDotsEffect(
-                    activeDotColor: Color(0xFF9CE1CF),
+                    activeDotColor: Color.fromARGB(255, 255, 255, 255),
                     dotHeight: 10,
                     dotWidth: 10,
                   ),
@@ -229,7 +231,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
   Widget buildOnboardingFour(BuildContext context){
     return SafeArea(
       child: Container(
-        color: Color(0xFF28112B),
+        color: Color.fromRGBO(146, 55, 77, 1),
         width: double.maxFinite,
         padding: EdgeInsets.symmetric(horizontal: 51, vertical: 92),
         child: Column(
@@ -258,7 +260,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                   controller : _pageViewController,
                   count: 4,
                   effect: ExpandingDotsEffect(
-                    activeDotColor: Color(0xFF9CE1CF),
+                    activeDotColor: Color.fromARGB(255, 255, 255, 255),
                     dotHeight: 10,
                     dotWidth: 10,
                   ),
