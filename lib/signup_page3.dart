@@ -10,6 +10,7 @@ class SignUp3 extends StatefulWidget {
   final String bloodType;
   final String allergies;
   final String medication;
+  final String phoneNumber; // Add this line
   final String contactName;
   final String contactNumber;
 
@@ -20,6 +21,7 @@ class SignUp3 extends StatefulWidget {
     required this.bloodType,
     required this.allergies,
     required this.medication,
+    required this.phoneNumber, // Add this line
     required this.contactName,
     required this.contactNumber,
   }) : super(key: key);
@@ -44,6 +46,7 @@ class _SignUp3State extends State<SignUp3> {
           'bloodType': widget.bloodType,
           'allergies': widget.allergies,
           'medication': widget.medication,
+          'phoneNumber': widget.phoneNumber, // Add this line
           'email': emailController.text,
           'contactName': widget.contactName,
           'contactNumber': widget.contactNumber,
@@ -55,7 +58,7 @@ class _SignUp3State extends State<SignUp3> {
           UserCredential userCredential = await firebaseService.signUpWithEmail(
             emailController.text,
             passwordController.text,
-            userData
+            userData,
           );
 
           User? user = userCredential.user;

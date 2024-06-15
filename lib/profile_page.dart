@@ -155,6 +155,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     SizedBox(height: 10),
                                     _buildInfoRow('Full Name', userDocument!['fullName']),
                                     _buildInfoRow('Date of Birth', userDocument!['dateOfBirth']),
+                                    _buildInfoRow('Phone Number', userDocument!['phoneNumber']),
                                     _buildInfoRow('Blood Type', userDocument!['bloodType']),
                                     _buildInfoRow('Allergies', userDocument!['allergies']),
                                     _buildInfoRow('Current Medication', userDocument!['medication']),
@@ -181,11 +182,11 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 16, color: Color.fromARGB(255, 0, 0, 0), fontWeight: FontWeight.bold),
           ),
           Text(
             value ?? '-',
-            style: TextStyle(fontSize: 16, color: Colors.black54),
+            style: TextStyle(fontSize: 16, color: Colors.black),
           ),
         ],
       ),

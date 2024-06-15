@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:hawa_v1/signup_page3.dart';
-import 'package:intl/intl.dart';
-import 'package:hawa_v1/home_page.dart';
+import 'package:hawa_v1/signup_page2.dart'; // Update the import if needed
 import 'package:hawa_v1/login_page.dart';
-import 'package:hawa_v1/signup_page2.dart';
+import 'package:intl/intl.dart';
 
 class SignUp extends StatefulWidget {
   SignUp({Key? key}) : super(key: key);
@@ -13,7 +10,7 @@ class SignUp extends StatefulWidget {
   _SignUpState createState() => _SignUpState();
 }
 
-class _SignUpState extends State<SignUp>{
+class _SignUpState extends State<SignUp> {
   final _formKey = GlobalKey<FormState>();
   bool _autoValidate = false;
   final TextEditingController fullNameController = TextEditingController();
@@ -21,6 +18,7 @@ class _SignUpState extends State<SignUp>{
   final TextEditingController bloodController = TextEditingController();
   final TextEditingController allergiesController = TextEditingController();
   final TextEditingController medicationController = TextEditingController();
+  final TextEditingController phoneNumberController = TextEditingController(); // Add this line
 
   Future<void> _selectDate(BuildContext context) async {
     DateTime? selectedDate = await showDatePicker(
@@ -33,16 +31,17 @@ class _SignUpState extends State<SignUp>{
       dateOfBirthController.text = DateFormat('dd-MM-yyyy').format(selectedDate);
     }
   }
-  
+
   void _submitForm(BuildContext context) {
     if (_formKey.currentState!.validate()) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => SignUp2(
-        fullName : fullNameController.text,
-        dateOfBirth : dateOfBirthController.text,
+        fullName: fullNameController.text,
+        dateOfBirth: dateOfBirthController.text,
         bloodType: bloodController.text,
         allergies: allergiesController.text,
         medication: medicationController.text,
-      )),);
+        phoneNumber: phoneNumberController.text,
+      )));
     } else {
       setState(() {
         _autoValidate = true;
@@ -124,6 +123,8 @@ class _SignUpState extends State<SignUp>{
                   _buildFullNameSection(context),
                   SizedBox(height: 20),
                   _buildDateOfBirthSection(context),
+                  SizedBox(height: 20),                  
+                  _buildPhoneNumberSection(context),
                   SizedBox(height: 20),
                   _buildBloodTypeSection(context),
                   SizedBox(height: 20),
@@ -134,16 +135,16 @@ class _SignUpState extends State<SignUp>{
                   Padding(
                     padding: const EdgeInsets.only(top: 5, bottom: 20),
                     child: Align(
-                      alignment: Alignment.center, 
+                      alignment: Alignment.center,
                       child: SizedBox(
-                        width: 150, 
+                        width: 150,
                         child: ElevatedButton(
                           onPressed: () => _submitForm(context),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF9CE1CF), 
-                            foregroundColor: const Color.fromARGB(255, 0, 0, 0), 
+                            backgroundColor: Color(0xFF9CE1CF),
+                            foregroundColor: const Color.fromARGB(255, 0, 0, 0),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20), 
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             minimumSize: Size(250.0, 40.0),
                           ),
@@ -151,15 +152,14 @@ class _SignUpState extends State<SignUp>{
                             fontFamily: 'Roboto',
                             fontWeight: FontWeight.w700,
                             fontSize: 16.0,
-                            color: Color.fromRGBO(37, 37, 37, 1), 
-                          ),
-                          ),
+                            color: Color.fromRGBO(37, 37, 37, 1),
+                          )),
                         ),
                       ),
                     ),
                   ),
                 ],
-              )
+              ),
             ),
           ),
         ),
@@ -251,7 +251,7 @@ class _SignUpState extends State<SignUp>{
           Padding(
             padding: EdgeInsets.only(left: 10),
             child: Container(
-              width: 200, 
+              width: 200,
               child: InkWell(
                 onTap: () => _selectDate(context),
                 child: IgnorePointer(
@@ -295,239 +295,299 @@ class _SignUpState extends State<SignUp>{
   }
 
   Widget _buildBloodTypeSection(BuildContext context) {
-  return Padding(
-    padding: EdgeInsets.only(right: 20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: "Blood Type ",
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 16.0,
-                    color: Color.fromARGB(255, 231, 255, 249),
+    return Padding(
+      padding: EdgeInsets.only(right: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: "Blood Type ",
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 16.0,
+                      color: Color.fromARGB(255, 231, 255, 249),
+                    ),
                   ),
-                ),
-                TextSpan(
-                  text: "(not required)",
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w300,
-                    fontSize: 12.0, // Smaller font size
-                    color: Color.fromARGB(255, 231, 255, 249),
+                  TextSpan(
+                    text: "(not required)",
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w300,
+                      fontSize: 12.0, // Smaller font size
+                      color: Color.fromARGB(255, 231, 255, 249),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        SizedBox(height: 6),
-        Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: Container(
-            width: 200,
-            child: DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Color.fromARGB(255, 52, 81, 82),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+          SizedBox(height: 6),
+          Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Container(
+              width: 200,
+              child: DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(color: Colors.blue),
+                dropdownColor: Colors.white, // Set dropdown background color
+                hint: Text(
+                  'Select blood type',
+                  style: TextStyle(
+                    color: Color.fromRGBO(195, 195, 195, 1),
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w300,
+                  ),
                 ),
-                contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-              ),
-              dropdownColor: Colors.white, // Set dropdown background color
-              hint: Text(
-                'Select blood type',
-                style: TextStyle(
-                  color: Color.fromRGBO(195, 195, 195, 1),
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-              iconEnabledColor: Color(0xFF9CE1CF),
-              iconDisabledColor: Colors.grey,
-              style: TextStyle(color: Colors.black), // Set dropdown text color to black
-              selectedItemBuilder: (BuildContext context) {
-                return <String>['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-                    .map<Widget>((String value) {
-                  return Text(
-                    value,
-                    style: TextStyle(color: Colors.white), // Set input field text color to white
+                iconEnabledColor: Color(0xFF9CE1CF),
+                iconDisabledColor: Colors.grey,
+                style: TextStyle(color: Colors.black), // Set dropdown text color to black
+                selectedItemBuilder: (BuildContext context) {
+                  return <String>['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+                      .map<Widget>((String value) {
+                    return Text(
+                      value,
+                      style: TextStyle(color: Colors.white), // Set input field text color to white
+                    );
+                  }).toList();
+                },
+                items: <String>['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+                    .map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
                   );
-                }).toList();
-              },
-              items: <String>['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-                  .map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                bloodController.text = newValue!;
-              },
+                }).toList(),
+                onChanged: (String? newValue) {
+                  bloodController.text = newValue!;
+                },
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
-
-
-Widget _buildAllergiesSection(BuildContext context) {
-  return Padding(
-    padding: EdgeInsets.only(right: 20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: "Allergies ",
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 16.0,
-                    color: Color.fromARGB(255, 231, 255, 249),
+  Widget _buildAllergiesSection(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(right: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: "Allergies ",
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 16.0,
+                      color: Color.fromARGB(255, 231, 255, 249),
+                    ),
                   ),
-                ),
-                TextSpan(
-                  text: "(not required)",
-                  style: TextStyle(
+                  TextSpan(
+                    text: "(not required)",
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w300,
+                      fontSize: 10.0, // Smaller font size
+                      color: Color.fromARGB(255, 231, 255, 249),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 6),
+          Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Container(
+              width: double.infinity,
+              child: TextField(
+                controller: allergiesController,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                  hintText: 'Enter allergies',
+                  hintStyle: TextStyle(
+                    color: Color.fromRGBO(195, 195, 195, 1),
                     fontFamily: 'Roboto',
                     fontWeight: FontWeight.w300,
-                    fontSize: 10.0, // Smaller font size
-                    color: Color.fromARGB(255, 231, 255, 249),
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-        SizedBox(height: 6),
-        Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: Container(
-            width: double.infinity,
-            child: TextField(
-              controller: allergiesController,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Color.fromARGB(255, 52, 81, 82),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-                contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-                hintText: 'Enter allergies',
-                hintStyle: TextStyle(
-                  color: Color.fromRGBO(195, 195, 195, 1),
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w300,
-                ),
+                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
               ),
-              style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
-Widget _buildCurrentMedicationSection(BuildContext context) {
-  return Padding(
-    padding: EdgeInsets.only(right: 20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: "Current Medication ",
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 16.0,
-                    color: Color.fromARGB(255, 231, 255, 249),
+  Widget _buildCurrentMedicationSection(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(right: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: "Current Medication ",
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 16.0,
+                      color: Color.fromARGB(255, 231, 255, 249),
+                    ),
                   ),
-                ),
-                TextSpan(
-                  text: "(not required)",
-                  style: TextStyle(
+                  TextSpan(
+                    text: "(not required)",
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w300,
+                      fontSize: 10.0, // Smaller font size
+                      color: Color.fromARGB(255, 231, 255, 249),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 6),
+          Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Container(
+              width: double.infinity,
+              child: TextField(
+                controller: medicationController,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                  hintText: 'Enter current medication',
+                  hintStyle: TextStyle(
+                    color: Color.fromRGBO(195, 195, 195, 1),
                     fontFamily: 'Roboto',
                     fontWeight: FontWeight.w300,
-                    fontSize: 10.0, // Smaller font size
-                    color: Color.fromARGB(255, 231, 255, 249),
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-        SizedBox(height: 6),
-        Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: Container(
-            width: double.infinity,
-            child: TextField(
-              controller: medicationController,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Color.fromARGB(255, 52, 81, 82),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-                contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-                hintText: 'Enter current medication',
-                hintStyle: TextStyle(
-                  color: Color.fromRGBO(195, 195, 195, 1),
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w300,
-                ),
+                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
               ),
-              style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
+  Widget _buildPhoneNumberSection(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(right: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Text(
+              "Phone Number *",
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w400,
+                fontSize: 16.0,
+                color: Color.fromARGB(255, 231, 255, 249),
+              ),
+            ),
+          ),
+          SizedBox(height: 6),
+          Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Container(
+              width: double.infinity,
+              child: TextFormField(
+                controller: phoneNumberController,
+                textInputAction: TextInputAction.next,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                  hintText: 'Enter phone number',
+                  hintStyle: TextStyle(
+                    color: Color.fromRGBO(195, 195, 195, 1),
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Phone number is required';
+                  }
+                  if (!RegExp(r'^\d+$').hasMatch(value)) {
+                    return 'Enter a valid phone number';
+                  }
+                  return null;
+                },
+                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void backToLogin(BuildContext context) {
-    Navigator.push(context,
-      MaterialPageRoute(builder: (context) => LoginPage()));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
   }
 }

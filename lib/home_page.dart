@@ -128,9 +128,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             TextButton(
               child: Text('Login'),
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginPage())).then((_) {
-                  if (!_popupCompleter!.isCompleted) {
-                    _popupCompleter!.complete();
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginPage())).then((value) {
+                  // Check if the user is authenticated after the login page returns
+                  User? user = FirebaseAuth.instance.currentUser;
+                  if (user != null) {
+                    setState(() {
+                      _isAuthenticated = true;
+                    });
+                    _popupCompleter?.complete();
                   }
                 });
               },
@@ -181,7 +186,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
-    // Function to initialize the camera
+  // Function to initialize the camera
   void _initializeCamera() async {
     final cameras = await availableCameras();
     final firstCamera = cameras.first;
@@ -190,92 +195,91 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   // Function to take 5 successive pictures
-Future<void> _takePictures() async {
-  if (!_isAuthenticated) {
-    await _showLoginRequiredDialog();
-    return;
-  }
-
-  try {
-    await _initializeControllerFuture;
-
-    List<String> imageUrls = [];
-    for (int i = 0; i < 5; i++) {
-      final image = await _cameraController.takePicture();
-      final directory = await getApplicationDocumentsDirectory();
-      final imagePath = path.join(directory.path, '${DateTime.now()}_$i.png');
-      await image.saveTo(imagePath);
-      logger.d('Picture saved to $imagePath');
-      final imageUrl = await _uploadImageToCloudStorage(imagePath);
-      imageUrls.add(imageUrl);
-      logger.d('Image $i uploaded to $imageUrl');
+  Future<void> _takePictures() async {
+    if (!_isAuthenticated) {
+      await _showLoginRequiredDialog();
+      return;
     }
 
-    await _sendSMSWithPicturesAndLocation(imageUrls);
-  } catch (e) {
-    logger.e('Error taking pictures: $e');
-  }
-}
+    try {
+      await _initializeControllerFuture;
 
-// Function to upload image to cloud storage
-Future<String> _uploadImageToCloudStorage(String imagePath) async {
-  File file = File(imagePath);
-  String fileName = path.basename(file.path);
-  Reference storageReference = FirebaseStorage.instance.ref().child('images/$fileName');
-  UploadTask uploadTask = storageReference.putFile(file);
-  await uploadTask;
-  String returnURL = await storageReference.getDownloadURL();
-  return returnURL;
-}
+      List<String> imageUrls = [];
+      for (int i = 0; i < 5; i++) {
+        final image = await _cameraController.takePicture();
+        final directory = await getApplicationDocumentsDirectory();
+        final imagePath = path.join(directory.path, '${DateTime.now()}_$i.png');
+        await image.saveTo(imagePath);
+        logger.d('Picture saved to $imagePath');
+        final imageUrl = await _uploadImageToCloudStorage(imagePath);
+        imageUrls.add(imageUrl);
+        logger.d('Image $i uploaded to $imageUrl');
+      }
 
-// Function to send SMS with picture URLs and location
-Future<void> _sendSMSWithPicturesAndLocation(List<String> imageUrls) async {
-  if (!_isAuthenticated) {
-    await _showLoginRequiredDialog();
-    return;
+      await _sendSMSWithPicturesAndLocation(imageUrls);
+    } catch (e) {
+      logger.e('Error taking pictures: $e');
+    }
   }
 
-  bool? permissionsGranted = await telephony.requestPhoneAndSmsPermissions;
-  if (permissionsGranted ?? false) {
-    Location location = new Location();
+  // Function to upload image to cloud storage
+  Future<String> _uploadImageToCloudStorage(String imagePath) async {
+    File file = File(imagePath);
+    String fileName = path.basename(file.path);
+    Reference storageReference = FirebaseStorage.instance.ref().child('images/$fileName');
+    UploadTask uploadTask = storageReference.putFile(file);
+    await uploadTask;
+    String returnURL = await storageReference.getDownloadURL();
+    return returnURL;
+  }
 
-    bool _serviceEnabled;
-    PermissionStatus _permissionGranted;
-    LocationData _locationData;
+  // Function to send SMS with picture URLs and location
+  Future<void> _sendSMSWithPicturesAndLocation(List<String> imageUrls) async {
+    if (!_isAuthenticated) {
+      await _showLoginRequiredDialog();
+      return;
+    }
 
-    _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
+    bool? permissionsGranted = await telephony.requestPhoneAndSmsPermissions;
+    if (permissionsGranted ?? false) {
+      Location location = new Location();
+
+      bool _serviceEnabled;
+      PermissionStatus _permissionGranted;
+      LocationData _locationData;
+
+      _serviceEnabled = await location.serviceEnabled();
       if (!_serviceEnabled) {
-        return;
+        _serviceEnabled = await location.requestService();
+        if (!_serviceEnabled) {
+          return;
+        }
       }
-    }
 
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
-        return;
+      _permissionGranted = await location.hasPermission();
+      if (_permissionGranted == PermissionStatus.denied) {
+        _permissionGranted = await location.requestPermission();
+        if (_permissionGranted != PermissionStatus.granted) {
+          return;
+        }
       }
+
+      _locationData = await location.getLocation();
+
+      String imagesMessage = imageUrls.map((url) => 'Here is the picture: $url').join('\n');
+
+      telephony.sendSms(
+        to: _emergencyNumber,
+        message: 'Emergency! $imagesMessage\nLocation: https://www.google.com/maps/search/?api=1&query=${_locationData.latitude},${_locationData.longitude}',
+      ).then((_) {
+        logger.d('SMS sent successfully with image URLs and location.');
+      }).catchError((error) {
+        logger.e('Failed to send SMS: $error');
+      });
+    } else {
+      logger.w('SMS permission not granted.');
     }
-
-    _locationData = await location.getLocation();
-
-    String imagesMessage = imageUrls.map((url) => 'Here is the picture: $url').join('\n');
-
-    telephony.sendSms(
-      to: _emergencyNumber,
-      message: 'Emergency! $imagesMessage\nLocation: https://www.google.com/maps/search/?api=1&query=${_locationData.latitude},${_locationData.longitude}',
-    ).then((_) {
-      logger.d('SMS sent successfully with image URLs and location.');
-    }).catchError((error) {
-      logger.e('Failed to send SMS: $error');
-    });
-  } else {
-    logger.w('SMS permission not granted.');
   }
-}
-
 
   Future<void> _callEmergencyNumber() async {
     final Uri emergencyUri = Uri(scheme: 'tel', path: '999');
@@ -336,171 +340,171 @@ Future<void> _sendSMSWithPicturesAndLocation(List<String> imageUrls) async {
       ),
       drawer: AppDrawer(),
       body: Builder(
-  builder: (context) => Stack(
-    children: [
-      CustomPaint(
-        size: Size(MediaQuery.of(context).size.width, 250),
-        painter: HalfCirclePainter(Colors.teal[700]!),
-      ),
-      Row(
-        children: [
-          Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: GestureDetector(
-              onTap: () {
-                Scaffold.of(context).openDrawer();
-              },
-              child: Icon(Icons.menu_rounded, color: Color.fromARGB(255, 10, 38, 39), size: 40),
+        builder: (context) => Stack(
+          children: [
+            CustomPaint(
+              size: Size(MediaQuery.of(context).size.width, 250),
+              painter: HalfCirclePainter(Colors.teal[700]!),
             ),
-          ),
-          Spacer(),
-          Padding(
-            padding: EdgeInsets.only(right: 20),
-            child: IconButton(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId, isAuthenticated: widget.isAuthenticated,)));
-              },
-              icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromARGB(255, 10, 38, 39)),
-            ),
-          ),
-        ],
-      ),
-      Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          SizedBox(height: 70), // Adjust the height accordingly
-          Center(
-            child: AnimatedContainer(
-              duration: Duration(milliseconds: 1000),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Color.fromARGB(255, 80, 190, 179).withOpacity(0.6),
-                    spreadRadius: _glowRadius,
-                    blurRadius: _glowRadius,
+            Row(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(left: 20),
+                  child: GestureDetector(
+                    onTap: () {
+                      Scaffold.of(context).openDrawer();
+                    },
+                    child: Icon(Icons.menu_rounded, color: Color.fromARGB(255, 10, 38, 39), size: 40),
                   ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (!_isAuthenticated) {
-                    await _showLoginRequiredDialog();
-                  } else {
-                    // SOS button action
-                  }
-                },
-                child: Column(
+                ),
+                Spacer(),
+                Padding(
+                  padding: EdgeInsets.only(right: 20),
+                  child: IconButton(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId, isAuthenticated: widget.isAuthenticated,)));
+                    },
+                    icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromARGB(255, 10, 38, 39)),
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                SizedBox(height: 70), // Adjust the height accordingly
+                Center(
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 1000),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color.fromARGB(255, 80, 190, 179).withOpacity(0.6),
+                          spreadRadius: _glowRadius,
+                          blurRadius: _glowRadius,
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (!_isAuthenticated) {
+                          await _showLoginRequiredDialog();
+                        } else {
+                          // SOS button action
+                        }
+                      },
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'S.O.S',
+                            style: GoogleFonts.quicksand(
+                              textStyle: TextStyle(
+                                color: Colors.teal[900], 
+                                fontWeight: FontWeight.w900,
+                                fontSize: 55, 
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'Press in case of emergencies',
+                            style: GoogleFonts.quicksand(
+                              textStyle: TextStyle(
+                                color: Colors.teal[900], 
+                                fontWeight: FontWeight.w400,
+                                fontSize: 15, 
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        shape: CircleBorder(),
+                        backgroundColor: Colors.teal[200],
+                        padding: EdgeInsets.all(83),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 50),
+                Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'S.O.S',
-                      style: GoogleFonts.quicksand(
-                        textStyle: TextStyle(
-                          color: Colors.teal[900], 
-                          fontWeight: FontWeight.w900,
-                          fontSize: 55, 
+                    Center(
+                      child: Text(
+                        "Welcome, $firstName",
+                        style: GoogleFonts.quicksand(
+                          textStyle: TextStyle(
+                            fontSize: 30,
+                            color: const Color.fromARGB(255, 255, 255, 255),
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),
-                    Text(
-                      'Press in case of emergencies',
-                      style: GoogleFonts.quicksand(
-                        textStyle: TextStyle(
-                          color: Colors.teal[900], 
-                          fontWeight: FontWeight.w400,
-                          fontSize: 15, 
+                    SizedBox(height: 60),
+                    Wrap(
+                      spacing: 15,
+                      runSpacing: 15,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () => _initiateCall(),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.phone, size: 48),
+                              SizedBox(height: 4), // Add some space between the icon and the text
+                              Text(
+                                "Call\nEmergency\nContact",
+                                style: TextStyle(fontSize: 16),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _buttonStates[0] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
+                            foregroundColor: _buttonStates[0] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
+                            minimumSize: Size(100, 150),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
+                            ),
+                          ),
                         ),
-                      ),
+                        ElevatedButton(
+                          onPressed: () => _takePictures(),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.camera_alt, size: 48),
+                              SizedBox(height: 4), // Add some space between the icon and the text
+                              Text(
+                                "Take\nPicture",
+                                style: TextStyle(fontSize: 16),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _buttonStates[1] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
+                            foregroundColor: _buttonStates[1] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
+                            minimumSize: Size(128, 150),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                style: ElevatedButton.styleFrom(
-                  shape: CircleBorder(),
-                  backgroundColor: Colors.teal[200],
-                  padding: EdgeInsets.all(83),
-                ),
-              ),
+              ],
             ),
-          ),
-          SizedBox(height: 50),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Center(
-                child: Text(
-                  "Welcome, $firstName",
-                  style: GoogleFonts.quicksand(
-                    textStyle: TextStyle(
-                      fontSize: 30,
-                      color: const Color.fromARGB(255, 255, 255, 255),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 60),
-              Wrap(
-                spacing: 15,
-                runSpacing: 15,
-                children: [
-                  ElevatedButton(
-                    onPressed: () => _initiateCall(),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.phone, size: 48),
-                        SizedBox(height: 4), // Add some space between the icon and the text
-                        Text(
-                          "Call\nEmergency\nContact",
-                          style: TextStyle(fontSize: 16),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _buttonStates[0] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
-                      foregroundColor: _buttonStates[0] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
-                      minimumSize: Size(100, 150),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
-                      ),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => _takePictures(),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.camera_alt, size: 48),
-                        SizedBox(height: 4), // Add some space between the icon and the text
-                        Text(
-                          "Take\nPicture",
-                          style: TextStyle(fontSize: 16),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _buttonStates[1] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
-                      foregroundColor: _buttonStates[1] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
-                      minimumSize: Size(128, 150),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
-    ],
-  ),
-)
     );
   }
 }
@@ -521,6 +525,14 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           SizedBox(height: 100,),
+          ListTile(
+            contentPadding: EdgeInsets.only(left: 50),
+            title: Text('Emergency Alerts', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1), fontWeight: FontWeight.w500),),
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => AboutUsPage()));
+            },
+          ),
+          SizedBox(height: 20,),
           ListTile(
             contentPadding: EdgeInsets.only(left: 50),
             title: Text('About Us', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1), fontWeight: FontWeight.w500),),
@@ -553,7 +565,6 @@ class AppDrawer extends StatelessWidget {
               });
             },
           ),
-          
         ],
       ),
     );

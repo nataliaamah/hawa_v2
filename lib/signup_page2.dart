@@ -7,6 +7,7 @@ class SignUp2 extends StatefulWidget {
   final String bloodType;
   final String allergies;
   final String medication;
+  final String phoneNumber; // Add this line
 
   SignUp2({
     Key? key,
@@ -15,6 +16,7 @@ class SignUp2 extends StatefulWidget {
     required this.bloodType,
     required this.allergies,
     required this.medication,
+    required this.phoneNumber, // Add this line
   }) : super(key: key);
 
   @override
@@ -37,6 +39,7 @@ class _SignUp2State extends State<SignUp2> {
     bloodController.text = widget.bloodType;
     allergiesController.text = widget.allergies;
     medicationController.text = widget.medication;
+    phoneNumberController.text = widget.phoneNumber; // Add this line
   }
 
   void _submitForm(BuildContext context) {
@@ -51,6 +54,7 @@ class _SignUp2State extends State<SignUp2> {
             bloodType: bloodController.text,
             allergies: allergiesController.text,
             medication: medicationController.text,
+            phoneNumber: phoneNumberController.text, // Add this line
             contactName: contactNameController.text,
             contactNumber: contactNumberController.text,
           ),
@@ -68,6 +72,7 @@ class _SignUp2State extends State<SignUp2> {
   final TextEditingController bloodController = TextEditingController();
   final TextEditingController allergiesController = TextEditingController();
   final TextEditingController medicationController = TextEditingController();
+  final TextEditingController phoneNumberController = TextEditingController(); // Add this line
 
   @override
   Widget build(BuildContext context) {
@@ -311,74 +316,74 @@ class _SignUp2State extends State<SignUp2> {
   }
 
   Widget _buildRelationshipSection(BuildContext context) {
-  return Container(
-    margin: EdgeInsets.only(right: 20),
-    padding: EdgeInsets.symmetric(horizontal: 1),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: Text(
-            "Relationship *",
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontWeight: FontWeight.w400,
-              fontSize: 16.0,
-              color: Color.fromARGB(255, 231, 255, 249),
-            ),
-          ),
-        ),
-        SizedBox(height: 6),
-        Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: Container(
-            width: double.infinity,
-            child: DropdownButtonFormField<String>(
-              value: _relationship,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Color.fromARGB(255, 52, 81, 82),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-                contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+    return Container(
+      margin: EdgeInsets.only(right: 20),
+      padding: EdgeInsets.symmetric(horizontal: 1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Text(
+              "Relationship *",
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w400,
+                fontSize: 16.0,
+                color: Color.fromARGB(255, 231, 255, 249),
               ),
-              dropdownColor: Colors.white,
-              style: TextStyle(color: Colors.white), // Style for the selected item text
-              items: <String>['Parent', 'Sibling', 'Close Friend']
-                  .map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w400)), // Style for the dropdown items
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _relationship = newValue!;
-                });
-              },
-              selectedItemBuilder: (BuildContext context) {
-                return <String>['Parent', 'Sibling', 'Close Friend'].map<Widget>((String value) {
-                  return Text(
-                    value,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  );
-                }).toList();
-              },
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+          SizedBox(height: 6),
+          Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Container(
+              width: double.infinity,
+              child: DropdownButtonFormField<String>(
+                value: _relationship,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                ),
+                dropdownColor: Colors.white,
+                style: TextStyle(color: Colors.white), // Style for the selected item text
+                items: <String>['Parent', 'Sibling', 'Close Friend']
+                    .map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w400)), // Style for the dropdown items
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _relationship = newValue!;
+                  });
+                },
+                selectedItemBuilder: (BuildContext context) {
+                  return <String>['Parent', 'Sibling', 'Close Friend'].map<Widget>((String value) {
+                    return Text(
+                      value,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    );
+                  }).toList();
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
