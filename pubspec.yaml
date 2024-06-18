@@ -41,7 +41,7 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/hawa_full.png"
+  image_path: "assets/images/hawa_background.png"
   
 
 flutter:
@@ -59,6 +59,7 @@ flutter:
     - assets/images/afiqah.png
     - assets/images/aliah.png
     - assets/images/SOS.png
+    - assets/images/google_logo.png
   fonts:
     - family : Roboto
       fonts:

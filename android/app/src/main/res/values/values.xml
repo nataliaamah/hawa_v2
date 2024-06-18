@@ -6,4 +6,5 @@
     <string name="google_crash_reporting_api_key" translatable="false">AIzaSyBI4sUEiu_uXYlDCRreSnsMC9oZGsT0D8c</string>
     <string name="google_storage_bucket" translatable="false">hawa-24.appspot.com</string>
     <string name="project_id" translatable="false">hawa-24</string>
+    <string name="default_web_client_id" translatable="false">412192301224-di6je6krheijmd1956mv7e5aiajgck1a.apps.googleusercontent.com</string>
 </resources>
