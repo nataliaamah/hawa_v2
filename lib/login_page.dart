@@ -7,10 +7,6 @@ import 'package:http/http.dart' as http;
 import 'home_page.dart';
 import 'signup_page.dart';
 
-TextEditingController emailController = TextEditingController();
-TextEditingController passwordController = TextEditingController();
-TextEditingController dateOfBirthController = TextEditingController();
-
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -19,6 +15,9 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> with StateMixin {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController dateOfBirthController = TextEditingController();
   String errorMessage = '';
 
   @override
@@ -37,6 +36,9 @@ class _LoginPageState extends State<LoginPage> with StateMixin {
         'https://www.googleapis.com/auth/user.birthday.read',
       ],
     );
+
+    // Ensure the user is signed out before attempting a new sign-in
+    await googleSignIn.signOut();
 
     final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
     if (googleUser == null) {
@@ -312,9 +314,9 @@ class _LoginPageState extends State<LoginPage> with StateMixin {
               Container(
                 width: 230.0,
                 decoration: BoxDecoration(
-                  color: Color.fromRGBO(188, 71, 73, 1),
+                  color: Color.fromRGBO(255, 255, 255, 1),
                   borderRadius: BorderRadius.circular(40),
-                  border: Border.all(color: Color.fromRGBO(188, 71, 73, 1)),
+                  border: Border.all(color: Color.fromRGBO(255, 255, 255, 1)),
                 ),
                 child: OutlinedButton(
                   onPressed: () async {

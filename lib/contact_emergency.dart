@@ -4,6 +4,7 @@ import 'package:hawa_v1/contact_emergency_view.dart';
 import 'package:hawa_v1/home_page.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'dart:async';
+import 'package:google_fonts/google_fonts.dart';
 
 class ContactEmergencyPage extends StatefulWidget {
   final String phoneNumber;
@@ -31,7 +32,7 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
     super.initState();
     _subscription = FirebaseFirestore.instance
         .collection('contact_emergency')
-        .where('emergencyNumber', isEqualTo: widget.phoneNumber)
+        .where('emergencyNumber', isEqualTo: _formatPhoneNumber(widget.phoneNumber))
         .snapshots()
         .listen((snapshot) {
       if (snapshot.docs.any((doc) {
@@ -54,6 +55,13 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
     super.dispose();
   }
 
+  String _formatPhoneNumber(String phoneNumber) {
+    if (!phoneNumber.startsWith('+')) {
+      return '+$phoneNumber';
+    }
+    return phoneNumber;
+  }
+
   void _startVibrating() {
     _isVibrating = true;
     _vibrate();
@@ -67,6 +75,11 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
 
   void _stopVibrating() {
     _isVibrating = false;
+  }
+
+  String _formatTimestamp(Timestamp timestamp) {
+    DateTime date = timestamp.toDate();
+    return "${date.hour}:${date.minute}  |  ${date.day}/${date.month}/${date.year}";
   }
 
   @override
@@ -99,93 +112,131 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
           },
         ),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('contact_emergency')
-            .where('emergencyNumber', isEqualTo: widget.phoneNumber)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          List<DocumentSnapshot> emergencyDocs = snapshot.data!.docs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>?;
-            return data != null;
-          }).toList();
-
-          if (emergencyDocs.isEmpty) {
-            return Center(
-              child: Text(
-                'There are no emergencies.',
-                style: TextStyle(color: Colors.white, fontSize: 20),
+      body: Column(
+        children: [
+          SizedBox(height: 20),
+          Center(
+            child: Text(
+              'Emergency Alerts',
+              style: GoogleFonts.quicksand(
+                textStyle: TextStyle(
+                  fontSize: 27,
+                  color: const Color.fromARGB(255, 255, 255, 255),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            );
-          }
+            ),
+          ),
+          Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+              child: Text(
+              "Emergencies from people who set you as emergency contact will show here",
+              style: GoogleFonts.quicksand(
+                textStyle: TextStyle(
+                  fontSize: 15,
+                  color: const Color.fromARGB(255, 255, 255, 255),
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            ),
+          ),
+          SizedBox(height: 30,),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('contact_emergency')
+                  .where('emergencyNumber', isEqualTo: _formatPhoneNumber(widget.phoneNumber))
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
 
-          return ListView.builder(
-            itemCount: emergencyDocs.length,
-            itemBuilder: (context, index) {
-              DocumentSnapshot emergencyData = emergencyDocs[index];
-              final data = emergencyData.data() as Map<String, dynamic>?;
-              if (data == null) {
-                return SizedBox.shrink(); // Handle null data case
-              }
+                List<DocumentSnapshot> emergencyDocs = snapshot.data!.docs.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>?;
+                  return data != null;
+                }).toList();
 
-              bool isResolved = data['resolved'] ?? true;
-              bool isNew = !isResolved && _isVibrating;
-
-              return GestureDetector(
-                onTap: () {
-                  if (isNew) {
-                    _stopVibrating();
-                  }
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ContactEmergencyViewPage(emergencyData: emergencyData),
+                if (emergencyDocs.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'There are no emergencies.',
+                      style: TextStyle(color: Colors.white, fontSize: 20),
                     ),
                   );
-                },
-                child: Container(
-                  margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isResolved
-                            ? Colors.transparent
-                            : Colors.yellow.withOpacity(0.6),
-                        spreadRadius: 10,
-                        blurRadius: 10,
+                }
+
+                return ListView.builder(
+                  itemCount: emergencyDocs.length,
+                  itemBuilder: (context, index) {
+                    DocumentSnapshot emergencyData = emergencyDocs[index];
+                    final data = emergencyData.data() as Map<String, dynamic>?;
+                    if (data == null) {
+                      return SizedBox.shrink(); // Handle null data case
+                    }
+
+                    bool isResolved = data['resolved'] ?? true;
+                    bool isNew = !isResolved && _isVibrating;
+
+                    return GestureDetector(
+                      onTap: () {
+                        if (isNew) {
+                          _stopVibrating();
+                        }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ContactEmergencyViewPage(emergencyData: emergencyData),
+                          ),
+                        ).then((_) {
+                          setState(() {}); // Refresh the state to update the card's appearance
+                        });
+                      },
+                      child: Container(
+                        margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isResolved
+                                  ? Colors.transparent
+                                  : Colors.yellow.withOpacity(0.6),
+                              spreadRadius: 10,
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            "${widget.fullName} Needs Help!",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Emergency at ${_formatTimestamp(data['timestamp'])}',
+                            style: TextStyle(
+                              color: Colors.black,
+                            ),
+                          ),
+                          trailing: Icon(
+                            isResolved ? Icons.check_circle : Icons.warning,
+                            color: isResolved ? Colors.green : Colors.red,
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
-                  child: ListTile(
-                    title: Text(
-                      data['userId'] ?? 'Unknown User',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Emergency at ${data['timestamp']?.toDate() ?? 'Unknown Time'}',
-                      style: TextStyle(
-                        color: Colors.black,
-                      ),
-                    ),
-                    trailing: Icon(
-                      isResolved ? Icons.check_circle : Icons.warning,
-                      color: isResolved ? Colors.green : Colors.red,
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

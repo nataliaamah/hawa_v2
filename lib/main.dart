@@ -48,10 +48,17 @@ class _HawaAppState extends State<HawaApp> {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       DocumentSnapshot userData = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      setState(() {
-        fullName = userData['fullName'];
-        userId = user.uid;
-      });
+      if (userData.exists) {
+        setState(() {
+          fullName = userData['fullName'];
+          userId = user.uid;
+        });
+      } else {
+        setState(() {
+          fullName = 'Guest';
+          userId = user.uid;
+        });
+      }
     }
     setState(() {
       _isLoading = false; // Set loading state to false after fetching data or if no user is logged in
@@ -87,11 +94,13 @@ class _HawaAppState extends State<HawaApp> {
                 });
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => HomePage(
-                    fullName: 'Guest',
-                    userId: '',
-                    isAuthenticated: false,
-                  )),
+                  MaterialPageRoute(
+                    builder: (context) => HomePage(
+                      fullName: fullName ?? 'Guest',
+                      userId: userId ?? '',
+                      isAuthenticated: userId != null,
+                    ),
+                  ),
                 );
               },
             ),

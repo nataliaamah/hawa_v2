@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:hawa_v1/login_page.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hawa_v1/home_page.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Onboarding extends StatelessWidget {
   final VoidCallback onCompleted;
@@ -16,9 +15,9 @@ class Onboarding extends StatelessWidget {
       home: Scaffold(
         body: OnboardingScreen(onCompleted: onCompleted),
       ),
-      theme : ThemeData(
-          scaffoldBackgroundColor: Color.fromARGB(255, 10, 38, 39),
-        )
+      theme: ThemeData(
+        scaffoldBackgroundColor: Color.fromARGB(255, 10, 38, 39),
+      ),
     );
   }
 }
@@ -34,24 +33,20 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> with TickerProviderStateMixin {
   late PageController _pageViewController;
-  late TabController _tabController;
   int _currentPageIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _pageViewController = PageController();
-    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
   void dispose() {
     _pageViewController.dispose();
-    _tabController.dispose();
     super.dispose();
   }
 
-// build pageview
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -65,7 +60,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             buildOnboardingTwo(context),
             buildOnboardingThree(context),
             buildOnboardingFour(context),
-            // Add other onboarding pages here
           ],
         ),
         _navigationButtons(),
@@ -79,48 +73,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     });
   }
 
-  void _updateCurrentPageIndex(int index) {
-    setState(() {
-      _currentPageIndex = index;
-    });
-  }
-
-  bool _isOnDesktopAndWeb() {
-    if (kIsWeb) return true;
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.macOS:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        return true;
-      default:
-        return false;
-    }
-  }
-
-// first onboarding
   Widget buildOnboardingOne(BuildContext context) {
     return SafeArea(
-    child: Container(
-      width: double.maxFinite,
-      padding: EdgeInsets.symmetric(horizontal: 51, vertical: 92),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Spacer(flex: 10),
-          Image.asset('assets/images/hawa_logo.png', height: 300, width: 400),
-          Text(
-            "Your Guardian in\n Times of Need",
-            textAlign: TextAlign.center,
-            style: GoogleFonts.quicksand(textStyle: TextStyle(fontSize: 30, color: const Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.w700)),
-          ),
-          Spacer(flex: 37),
-          SizedBox(height: 30),
-          Padding(
-              padding: const EdgeInsets.only(bottom: 30), // Adjust padding as needed
+      child: Container(
+        width: double.maxFinite,
+        padding: EdgeInsets.symmetric(horizontal: 51, vertical: 92),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Spacer(flex: 10),
+            Image.asset('assets/images/hawa_logo.png', height: 300, width: 400),
+            Text(
+              "Your Guardian in\n Times of Need",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.quicksand(textStyle: TextStyle(fontSize: 30, color: const Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.w700)),
+            ),
+            Spacer(flex: 37),
+            SizedBox(height: 30),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 30),
               child: SizedBox(
                 height: 10,
                 child: SmoothPageIndicator(
-                  controller : _pageViewController,
+                  controller: _pageViewController,
                   count: 4,
                   effect: ExpandingDotsEffect(
                     activeDotColor: Color.fromARGB(255, 255, 255, 255),
@@ -130,14 +105,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 ),
               ),
             ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
   }
 
-  // second onboarding
-  Widget buildOnboardingTwo(BuildContext context){
+  Widget buildOnboardingTwo(BuildContext context) {
     return SafeArea(
       child: Container(
         color: Color.fromRGBO(86, 71, 135, 1),
@@ -153,7 +127,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               "SOS",
               style: GoogleFonts.quicksand(textStyle: TextStyle(fontSize: 24, color: const Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.w700)),
             ),
-            SizedBox(height:10),
+            SizedBox(height: 10),
             Text(
               "Hawa allows you to alert your local emergency services with a click of a button.",
               style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400, fontSize: 15),
@@ -162,11 +136,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             Spacer(flex: 2),
             SizedBox(height: 10),
             Padding(
-              padding: const EdgeInsets.only(bottom: 30), // Adjust padding as needed
+              padding: const EdgeInsets.only(bottom: 30),
               child: SizedBox(
                 height: 10,
                 child: SmoothPageIndicator(
-                  controller : _pageViewController,
+                  controller: _pageViewController,
                   count: 4,
                   effect: ExpandingDotsEffect(
                     activeDotColor: Color.fromARGB(255, 255, 255, 255),
@@ -176,13 +150,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 ),
               ),
             ),
-          ]
-        )
+          ],
+        ),
       ),
-      );
+    );
   }
 
-  Widget buildOnboardingThree(BuildContext context){
+  Widget buildOnboardingThree(BuildContext context) {
     return SafeArea(
       child: Container(
         color: Color.fromRGBO(152, 71, 62, 1),
@@ -199,7 +173,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               style: GoogleFonts.quicksand(textStyle: TextStyle(fontSize: 24, color: const Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.w700)),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height:10),
+            SizedBox(height: 10),
             Text(
               "Share images of your surroundings to your designated emergency contact.",
               style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400, fontSize: 15),
@@ -208,11 +182,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             Spacer(flex: 2),
             SizedBox(height: 20),
             Padding(
-              padding: const EdgeInsets.only(bottom: 30), // Adjust padding as needed
+              padding: const EdgeInsets.only(bottom: 30),
               child: SizedBox(
                 height: 10,
                 child: SmoothPageIndicator(
-                  controller : _pageViewController,
+                  controller: _pageViewController,
                   count: 4,
                   effect: ExpandingDotsEffect(
                     activeDotColor: Color.fromARGB(255, 255, 255, 255),
@@ -222,13 +196,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 ),
               ),
             ),
-          ]
-        )
+          ],
+        ),
       ),
-      );
+    );
   }
 
-  Widget buildOnboardingFour(BuildContext context){
+  Widget buildOnboardingFour(BuildContext context) {
     return SafeArea(
       child: Container(
         color: Color.fromRGBO(146, 55, 77, 1),
@@ -244,7 +218,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               "Emergency Calls",
               style: GoogleFonts.quicksand(textStyle: TextStyle(fontSize: 24, color: const Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.w700)),
             ),
-            SizedBox(height:10),
+            SizedBox(height: 10),
             Text(
               "Initiate a call to your emergency contact directly from the app, ensuring quick access to assistance in times of distress.",
               style: TextStyle(color: Colors.white, fontFamily: 'Roboto', fontWeight: FontWeight.w400, fontSize: 15),
@@ -253,11 +227,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             Spacer(flex: 2),
             SizedBox(height: 20),
             Padding(
-              padding: const EdgeInsets.only(bottom: 30), 
+              padding: const EdgeInsets.only(bottom: 30),
               child: SizedBox(
                 height: 10,
                 child: SmoothPageIndicator(
-                  controller : _pageViewController,
+                  controller: _pageViewController,
                   count: 4,
                   effect: ExpandingDotsEffect(
                     activeDotColor: Color.fromARGB(255, 255, 255, 255),
@@ -267,117 +241,76 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 ),
               ),
             ),
-          ]
-        )
+          ],
+        ),
       ),
-      );
+    );
   }
 
-  
-  Row _leftButton() {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      GestureDetector(
-        onTap: () {
-          setState(() {
-              _currentPageIndex -= 1;
-          });
-          _pageViewController.animateToPage(
-            _currentPageIndex,
-            duration: Duration(milliseconds: 250), // Sets duration to 300 milliseconds
-            curve: Curves.easeInOut);
-        },
-        child: 
-        Padding(
-          padding: EdgeInsets.only(bottom: 60, left:50),
-          child: Image.asset('assets/images/nextArrow.png', height: 30, width: 30,),
-          )
-      ),
-    ],
-  );
-  }
-  
-  // arrow next
   Row _navigationButtons() {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      // Only show 'Previous' button if currentPageIndex is greater than 0
-      if (_currentPageIndex > 0)
-        GestureDetector(
-          onTap: () {
-            setState(() {
-              _currentPageIndex -= 1;
-            });
-            _pageViewController.animateToPage(
-              _currentPageIndex,
-              duration: Duration(milliseconds: 250),
-              curve: Curves.easeInOut
-            );
-          },
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 60, horizontal: 50),
-            child: Image.asset('assets/images/backArrow.png', height: 30, width: 30),
-          )
-        ),
-      
-
-      if (_currentPageIndex == 0)
-        GestureDetector(
-          onTap: () {
-            setState(() {
-              _currentPageIndex += 1;
-            });
-            _pageViewController.animateToPage(
-              _currentPageIndex,
-              duration: Duration(milliseconds: 250),
-              curve: Curves.easeInOut
-            );
-          },
-          child: Padding(
-            padding: EdgeInsets.only(bottom: 60, left: 313),
-            child: Image.asset('assets/images/nextArrow.png', height: 30, width: 30),
-          )
-        )
-      else if (_currentPageIndex < 3)
-        GestureDetector(
-          onTap: () {
-            setState(() {
-              _currentPageIndex += 1;
-            });
-            _pageViewController.animateToPage(
-              _currentPageIndex,
-              duration: Duration(milliseconds: 250),
-              curve: Curves.easeInOut
-            );
-          },
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 60, horizontal: 50),
-            child: Image.asset('assets/images/nextArrow.png', height: 30, width: 30),
-          )
-        )
-      else
-        TextButton(
-          onPressed: () {
-            Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => HomePage(
-                          fullName: 'Guest',
-                          userId: '',
-                          isAuthenticated: false,
-                        ),
-                      ),
-                    );
-          },
-          child: Text('Next', style: TextStyle(fontSize: 18, fontFamily: "Roboto", fontWeight: FontWeight.w400, color: Color.fromRGBO(255, 255, 255, 1))),
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.symmetric(vertical: 60, horizontal:50),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        if (_currentPageIndex > 0)
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _currentPageIndex -= 1;
+              });
+              _pageViewController.animateToPage(
+                _currentPageIndex,
+                duration: Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+              );
+            },
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 60, horizontal: 50),
+              child: Image.asset('assets/images/backArrow.png', height: 30, width: 30),
+            ),
           ),
-        ),
-    ],
-  );
+        if (_currentPageIndex == 0)
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _currentPageIndex += 1;
+              });
+              _pageViewController.animateToPage(
+                _currentPageIndex,
+                duration: Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+              );
+            },
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 60, left: 313),
+              child: Image.asset('assets/images/nextArrow.png', height: 30, width: 30),
+            ),
+          )
+        else if (_currentPageIndex < 3)
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _currentPageIndex += 1;
+              });
+              _pageViewController.animateToPage(
+                _currentPageIndex,
+                duration: Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+              );
+            },
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 60, horizontal: 50),
+              child: Image.asset('assets/images/nextArrow.png', height: 30, width: 30),
+            ),
+          )
+        else
+          TextButton(
+            onPressed: widget.onCompleted,
+            child: Text('Next', style: TextStyle(fontSize: 18, fontFamily: "Roboto", fontWeight: FontWeight.w400, color: Color.fromRGBO(255, 255, 255, 1))),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 60, horizontal: 50),
+            ),
+          ),
+      ],
+    );
+  }
 }
-}
-

@@ -6,6 +6,7 @@ class ContactUsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 10, 38, 39),
       body: CustomScrollView(
         slivers: <Widget>[
           SliverAppBar(

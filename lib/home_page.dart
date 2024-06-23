@@ -8,7 +8,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'about_us.dart';
 import 'contact_us.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:permission_handler/permission_handler.dart' as perm;
@@ -613,6 +612,11 @@ class AppDrawer extends StatelessWidget {
     return null;
   }
 
+  Future<String?> _fetchFullName(String userId) async {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    return userDoc['fullName'];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -635,21 +639,31 @@ class AppDrawer extends StatelessWidget {
               if (isAuthenticated) {
                 _fetchPhoneNumber().then((phoneNumber) {
                   if (phoneNumber != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ContactEmergencyPage(
-                          phoneNumber: phoneNumber,
-                          fullName: 'User Full Name', // Pass the full name here
-                          userId: userId, // Pass the userId here
-                          isAuthenticated: isAuthenticated, // Pass the authentication status here
-                        ),
-                      ),
-                    ).then((_) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => HomePage(isAuthenticated: isAuthenticated, fullName: 'User Full Name', userId: userId)),
-                      );
+                    _fetchFullName(userId).then((fullName) {
+                      if (fullName != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ContactEmergencyPage(
+                              phoneNumber: phoneNumber,
+                              fullName: fullName,
+                              userId: userId,
+                              isAuthenticated: isAuthenticated,
+                            ),
+                          ),
+                        ).then((_) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => HomePage(isAuthenticated: isAuthenticated, fullName: fullName, userId: userId)),
+                          );
+                        });
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Full name not found'),
+                          ),
+                        );
+                      }
                     });
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
