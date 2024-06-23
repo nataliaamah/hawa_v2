@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "412192301224",
+    "project_id": "hawa-24",
+    "storage_bucket": "hawa-24.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:412192301224:android:8f0dde3e43b709131c229d",
+        "android_client_info": {
+          "package_name": "com.hawa.application"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "412192301224-pel5l84f53sfq6npce2t6d4taqrgh4g2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hawa.application",
+            "certificate_hash": "a5375ad8a18782f14b6c81c5ef0a38f88c2b6683"
+          }
+        },
+        {
+          "client_id": "412192301224-di6je6krheijmd1956mv7e5aiajgck1a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBI4sUEiu_uXYlDCRreSnsMC9oZGsT0D8c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "412192301224-di6je6krheijmd1956mv7e5aiajgck1a.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

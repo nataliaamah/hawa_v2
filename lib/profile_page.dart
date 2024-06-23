@@ -100,7 +100,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           SizedBox(height: 20),
                           Center(
                             child: Text(
-                              userDocument!['fullName'],
+                              (userDocument!.data() as Map<String, dynamic>)['fullName'] ?? 'none',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -153,14 +153,14 @@ class _ProfilePageState extends State<ProfilePage> {
                                       ),
                                     ),
                                     SizedBox(height: 10),
-                                    _buildInfoRow('Full Name', userDocument!['fullName']),
-                                    _buildInfoRow('Date of Birth', userDocument!['dateOfBirth']),
-                                    _buildInfoRow('Phone Number', userDocument!['phoneNumber']),
-                                    _buildInfoRow('Blood Type', userDocument!['bloodType']),
-                                    _buildInfoRow('Allergies', userDocument!['allergies']),
-                                    _buildInfoRow('Current Medication', userDocument!['medication']),
-                                    _buildInfoRow('Emergency Contact Name', userDocument!['contactName']),
-                                    _buildInfoRow('Emergency Contact Number', userDocument!['contactNumber']),
+                                    _buildInfoRow('Full Name', (userDocument!.data() as Map<String, dynamic>)['fullName']),
+                                    _buildInfoRow('Date of Birth', (userDocument!.data() as Map<String, dynamic>)['dateOfBirth']),
+                                    _buildInfoRow('Phone Number', (userDocument!.data() as Map<String, dynamic>)['phoneNumber']),
+                                    _buildInfoRow('Blood Type', (userDocument!.data() as Map<String, dynamic>)['bloodType']),
+                                    _buildInfoRow('Allergies', (userDocument!.data() as Map<String, dynamic>)['allergies']),
+                                    _buildInfoRow('Current Medication', (userDocument!.data() as Map<String, dynamic>)['currentMedication']),
+                                    _buildInfoRow('Emergency Contact Name', (userDocument!.data() as Map<String, dynamic>)['contactName']),
+                                    _buildInfoRow('Emergency Contact Number', (userDocument!.data() as Map<String, dynamic>)['contactNumber']),
                                   ],
                                 ),
                               ),
@@ -174,7 +174,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String? value) {
+  Widget _buildInfoRow(String label, dynamic value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Column(
@@ -185,7 +185,7 @@ class _ProfilePageState extends State<ProfilePage> {
             style: TextStyle(fontSize: 16, color: Color.fromARGB(255, 0, 0, 0), fontWeight: FontWeight.bold),
           ),
           Text(
-            value ?? '-',
+            value != null && value.toString().isNotEmpty ? value.toString() : 'none',
             style: TextStyle(fontSize: 16, color: Colors.black),
           ),
         ],

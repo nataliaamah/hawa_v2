@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:hawa_v1/signup_page3.dart';
+import 'signup_page3.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'home_page.dart';
 
 class SignUp2 extends StatefulWidget {
   final String fullName;
@@ -7,7 +10,8 @@ class SignUp2 extends StatefulWidget {
   final String bloodType;
   final String allergies;
   final String medication;
-  final String phoneNumber; // Add this line
+  final String phoneNumber;
+  final String signUpMethod;
 
   SignUp2({
     Key? key,
@@ -16,7 +20,8 @@ class SignUp2 extends StatefulWidget {
     required this.bloodType,
     required this.allergies,
     required this.medication,
-    required this.phoneNumber, // Add this line
+    required this.phoneNumber,
+    required this.signUpMethod,
   }) : super(key: key);
 
   @override
@@ -33,33 +38,70 @@ class _SignUp2State extends State<SignUp2> {
   @override
   void initState() {
     super.initState();
-    // Pre-fill controllers with passed data
     fullNameController.text = widget.fullName;
     dateOfBirthController.text = widget.dateOfBirth;
     bloodController.text = widget.bloodType;
     allergiesController.text = widget.allergies;
     medicationController.text = widget.medication;
-    phoneNumberController.text = widget.phoneNumber; // Add this line
+    phoneNumberController.text = widget.phoneNumber;
   }
 
-  void _submitForm(BuildContext context) {
+  void _submitForm(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      // Navigate to SignUp3 with filled data
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SignUp3(
-            fullName: fullNameController.text,
-            dateOfBirth: dateOfBirthController.text,
-            bloodType: bloodController.text,
-            allergies: allergiesController.text,
-            medication: medicationController.text,
-            phoneNumber: phoneNumberController.text, // Add this line
-            contactName: contactNameController.text,
-            contactNumber: contactNumberController.text,
+      if (widget.signUpMethod == 'Google') {
+        // Save data to Firestore
+        try {
+          await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser?.uid).set({
+            'fullName': fullNameController.text,
+            'dateOfBirth': dateOfBirthController.text,
+            'bloodType': bloodController.text,
+            'allergies': allergiesController.text,
+            'currentMedication': medicationController.text,
+            'phoneNumber': phoneNumberController.text,
+            'contactName': contactNameController.text,
+            'contactNumber': contactNumberController.text,
+            'relationship': _relationship,
+            'email': FirebaseAuth.instance.currentUser?.email,
+            'uid': FirebaseAuth.instance.currentUser?.uid,
+            'signUpMethod': 'Google',
+          });
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(
+                fullName: fullNameController.text,
+                userId: FirebaseAuth.instance.currentUser!.uid,
+                isAuthenticated: true,
+              ),
+            ),
+          );
+        } catch (e) {
+          setState(() {
+            _autoValidate = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error saving data: $e')),
+          );
+        }
+      } else {
+        // Navigate to SignUp3 for traditional email sign-ups
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SignUp3(
+              fullName: fullNameController.text,
+              dateOfBirth: dateOfBirthController.text,
+              bloodType: bloodController.text,
+              allergies: allergiesController.text,
+              medication: medicationController.text,
+              phoneNumber: phoneNumberController.text,
+              contactName: contactNameController.text,
+              contactNumber: contactNumberController.text,
+            ),
           ),
-        ),
-      );
+        );
+      }
     } else {
       setState(() {
         _autoValidate = true;
@@ -72,7 +114,7 @@ class _SignUp2State extends State<SignUp2> {
   final TextEditingController bloodController = TextEditingController();
   final TextEditingController allergiesController = TextEditingController();
   final TextEditingController medicationController = TextEditingController();
-  final TextEditingController phoneNumberController = TextEditingController(); // Add this line
+  final TextEditingController phoneNumberController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +161,7 @@ class _SignUp2State extends State<SignUp2> {
                               color: Color.fromRGBO(255, 255, 255, 1),
                             ),
                           ),
-                          WidgetSpan(child: SizedBox(height: 40)), // Add space
+                          WidgetSpan(child: SizedBox(height: 40)),
                           TextSpan(
                             text: "Step 2/3\n",
                             style: TextStyle(
@@ -129,7 +171,7 @@ class _SignUp2State extends State<SignUp2> {
                               color: Color.fromRGBO(255, 255, 255, 1),
                             ),
                           ),
-                          WidgetSpan(child: SizedBox(height: 20)), // Add space
+                          WidgetSpan(child: SizedBox(height: 20)),
                           TextSpan(
                             text: "Enter your emergency contact information",
                             style: TextStyle(
@@ -168,7 +210,7 @@ class _SignUp2State extends State<SignUp2> {
                             minimumSize: Size(250.0, 40.0),
                           ),
                           child: Text(
-                            'Finish',
+                            'Continue',
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontWeight: FontWeight.w700,
@@ -356,7 +398,7 @@ class _SignUp2State extends State<SignUp2> {
                 ),
                 dropdownColor: Colors.white,
                 style: TextStyle(color: Colors.white), // Style for the selected item text
-                items: <String>['Parent', 'Sibling', 'Close Friend']
+                items: <String>['Parent', 'Sibling', 'Close Friend', 'Children']
                     .map((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
@@ -369,7 +411,7 @@ class _SignUp2State extends State<SignUp2> {
                   });
                 },
                 selectedItemBuilder: (BuildContext context) {
-                  return <String>['Parent', 'Sibling', 'Close Friend'].map<Widget>((String value) {
+                  return <String>['Parent', 'Sibling', 'Close Friend', 'Children'].map<Widget>((String value) {
                     return Text(
                       value,
                       style: TextStyle(

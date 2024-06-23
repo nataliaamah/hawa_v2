@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import the Firebase Auth package
-import 'firebase_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'home_page.dart';
-import 'login_page.dart';
 
 class SignUp3 extends StatefulWidget {
   final String fullName;
@@ -10,7 +9,7 @@ class SignUp3 extends StatefulWidget {
   final String bloodType;
   final String allergies;
   final String medication;
-  final String phoneNumber; // Add this line
+  final String phoneNumber;
   final String contactName;
   final String contactNumber;
 
@@ -21,7 +20,7 @@ class SignUp3 extends StatefulWidget {
     required this.bloodType,
     required this.allergies,
     required this.medication,
-    required this.phoneNumber, // Add this line
+    required this.phoneNumber,
     required this.contactName,
     required this.contactNumber,
   }) : super(key: key);
@@ -35,58 +34,43 @@ class _SignUp3State extends State<SignUp3> {
   bool _autoValidate = false;
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController verifyPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
+  String errorMessage = '';
 
-  void _submitForm(BuildContext context) async {
+  Future<void> _registerUser() async {
     if (_formKey.currentState!.validate()) {
-      if (passwordController.text == verifyPasswordController.text) {
-        Map<String, dynamic> userData = {
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: emailController.text,
+          password: passwordController.text,
+        );
+
+        await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
           'fullName': widget.fullName,
           'dateOfBirth': widget.dateOfBirth,
           'bloodType': widget.bloodType,
           'allergies': widget.allergies,
           'medication': widget.medication,
-          'phoneNumber': widget.phoneNumber, // Add this line
-          'email': emailController.text,
+          'phoneNumber': widget.phoneNumber,
           'contactName': widget.contactName,
           'contactNumber': widget.contactNumber,
-          'role': 'user', // Automatically set role to 'user'
-        };
+          'email': emailController.text,
+        });
 
-        FirebaseService firebaseService = FirebaseService();
-        try {
-          UserCredential userCredential = await firebaseService.signUpWithEmail(
-            emailController.text,
-            passwordController.text,
-            userData,
-          );
-
-          User? user = userCredential.user;
-
-          if (user != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Sign up Successful!')),
-            );
-
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => HomePage(
-                  fullName: widget.fullName,
-                  userId: user.uid,
-                ),
-              ),
-            );
-          }
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Sign up failed: $e')),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Passwords do not match')),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(
+              fullName: widget.fullName,
+              userId: userCredential.user!.uid,
+              isAuthenticated: true,
+            ),
+          ),
         );
+      } catch (e) {
+        setState(() {
+          errorMessage = e.toString();
+        });
       }
     } else {
       setState(() {
@@ -140,7 +124,7 @@ class _SignUp3State extends State<SignUp3> {
                               color: Color.fromRGBO(255, 255, 255, 1),
                             ),
                           ),
-                          WidgetSpan(child: SizedBox(height: 40)), // Add space
+                          WidgetSpan(child: SizedBox(height: 40)),
                           TextSpan(
                             text: "Step 3/3\n",
                             style: TextStyle(
@@ -150,9 +134,9 @@ class _SignUp3State extends State<SignUp3> {
                               color: Color.fromRGBO(255, 255, 255, 1),
                             ),
                           ),
-                          WidgetSpan(child: SizedBox(height: 20)), // Add space
+                          WidgetSpan(child: SizedBox(height: 20)),
                           TextSpan(
-                            text: "Enter your account information",
+                            text: "Complete your registration",
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontWeight: FontWeight.w300,
@@ -170,8 +154,16 @@ class _SignUp3State extends State<SignUp3> {
                   SizedBox(height: 20),
                   _buildPasswordSection(context),
                   SizedBox(height: 20),
-                  _buildVerifyPasswordSection(context),
+                  _buildConfirmPasswordSection(context),
                   SizedBox(height: 20),
+                  if (errorMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20.0),
+                      child: Text(
+                        errorMessage,
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
                   Padding(
                     padding: const EdgeInsets.only(top: 5, bottom: 20),
                     child: Align(
@@ -179,7 +171,7 @@ class _SignUp3State extends State<SignUp3> {
                       child: SizedBox(
                         width: 150,
                         child: ElevatedButton(
-                          onPressed: () => _submitForm(context),
+                          onPressed: _registerUser,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFF9CE1CF),
                             foregroundColor: const Color.fromARGB(255, 0, 0, 0),
@@ -189,7 +181,7 @@ class _SignUp3State extends State<SignUp3> {
                             minimumSize: Size(250.0, 40.0),
                           ),
                           child: Text(
-                            'Sign up',
+                            'Finish',
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontWeight: FontWeight.w700,
@@ -211,200 +203,112 @@ class _SignUp3State extends State<SignUp3> {
   }
 
   Widget _buildEmailSection(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(right: 20),
-      padding: EdgeInsets.symmetric(horizontal: 1),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(left: 10),
-            child: Text(
-              "Email *",
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w400,
-                fontSize: 16.0,
-                color: Color.fromARGB(255, 231, 255, 249),
-              ),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 10), // Adjust padding to align text with input field
+          child: Text(
+            "Email",
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
           ),
-          SizedBox(height: 6),
-          Padding(
-            padding: EdgeInsets.only(left: 10),
-            child: Container(
-              width: double.infinity,
-              child: TextFormField(
-                controller: emailController,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Color.fromARGB(255, 52, 81, 82),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(
-                        color: Color.fromARGB(255, 52, 81, 82)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Colors.blue),
-                  ),
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-                  hintText: 'Enter email',
-                  hintStyle: TextStyle(
-                      color: Color.fromRGBO(195, 195, 195, 1),
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w300),
-                ),
-                style: TextStyle(color: Colors.white), // Make input text white
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Email is required';
-                  }
-                  if (!RegExp(
-                          r'^[^@]+@[^@]+\.[^@]+')
-                      .hasMatch(value)) {
-                    return 'Enter a valid email address';
-                  }
-                  return null;
-                },
-              ),
-            ),
+        ),
+        SizedBox(height: 10.0),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 10), // Add padding to narrow the width
+          child: _buildTextFormField(
+            controller: emailController,
+            prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF9CE1CF)),
+            hintText: "Enter email",
+            obscureText: false,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildPasswordSection(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(right: 20),
-      padding: EdgeInsets.symmetric(horizontal: 1),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(left: 10),
-            child: Text(
-              "Password *",
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w400,
-                fontSize: 16.0,
-                color: Color.fromARGB(255, 231, 255, 249),
-              ),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 10), // Adjust padding to align text with input field
+          child: Text(
+            "Password",
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
           ),
-          SizedBox(height: 6),
-          Padding(
-            padding: EdgeInsets.only(left: 10),
-            child: Container(
-              width: double.infinity,
-              child: TextFormField(
-                controller: passwordController,
-                obscureText: true,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Color.fromARGB(255, 52, 81, 82),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(
-                        color: Color.fromARGB(255, 52, 81, 82)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Colors.blue),
-                  ),
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-                  hintText: 'Enter password',
-                  hintStyle: TextStyle(
-                      color: Color.fromRGBO(195, 195, 195, 1),
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w300),
-                ),
-                style: TextStyle(color: Colors.white), // Make input text white
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Password is required';
-                  }
-                  if (value.length < 6) {
-                    return 'Password must be at least 6 characters';
-                  }
-                  return null;
-                },
-              ),
-            ),
+        ),
+        SizedBox(height: 10.0),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 10), // Add padding to narrow the width
+          child: _buildTextFormField(
+            controller: passwordController,
+            prefixIcon: Icon(Icons.password_outlined, color: Color(0xFF9CE1CF)),
+            hintText: "Enter password",
+            obscureText: true,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildVerifyPasswordSection(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(right: 20),
-      padding: EdgeInsets.symmetric(horizontal: 1),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(left: 10),
-            child: Text(
-              "Verify Password *",
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w400,
-                fontSize: 16.0,
-                color: Color.fromARGB(255, 231, 255, 249),
-              ),
-            ),
+  Widget _buildConfirmPasswordSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 10), // Adjust padding to align text with input field
+          child: Text(
+            "Confirm Password",
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
           ),
-          SizedBox(height: 6),
-          Padding(
-            padding: EdgeInsets.only(left: 10),
-            child: Container(
-              width: double.infinity,
-              child: TextFormField(
-                controller: verifyPasswordController,
-                obscureText: true,
-                textInputAction: TextInputAction.done,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Color.fromARGB(255, 52, 81, 82),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(
-                        color: Color.fromARGB(255, 52, 81, 82)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Colors.blue),
-                  ),
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-                  hintText: 'Verify password',
-                  hintStyle: TextStyle(
-                      color: Color.fromRGBO(195, 195, 195, 1),
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w300),
-                ),
-                style: TextStyle(color: Colors.white), // Make input text white
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Verify password is required';
-                  }
-                  if (value != passwordController.text) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
-              ),
-            ),
+        ),
+        SizedBox(height: 10.0),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 10), // Add padding to narrow the width
+          child: _buildTextFormField(
+            controller: confirmPasswordController,
+            prefixIcon: Icon(Icons.password_outlined, color: Color(0xFF9CE1CF)),
+            hintText: "Confirm password",
+            obscureText: true,
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextFormField({
+    required TextEditingController controller,
+    required String hintText,
+    bool obscureText = false,
+    Widget? prefixIcon,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscureText,
+        style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+        decoration: InputDecoration(
+          prefixIcon: prefixIcon,
+          hintText: hintText,
+          hintStyle: TextStyle(
+            color: Color.fromRGBO(195, 195, 195, 1),
+            fontFamily: 'Roboto',
+            fontWeight: FontWeight.w300,
+          ),
+          filled: true,
+          fillColor: Color.fromARGB(255, 52, 81, 82),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide(color: const Color.fromARGB(255, 33, 215, 243)),
+          ),
+          contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+        ),
       ),
     );
   }

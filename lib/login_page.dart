@@ -1,21 +1,136 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:hawa_v1/home_page.dart';
-import 'package:hawa_v1/signup_page.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
+import 'home_page.dart';
+import 'signup_page.dart';
 
 TextEditingController emailController = TextEditingController();
 TextEditingController passwordController = TextEditingController();
+TextEditingController dateOfBirthController = TextEditingController();
 
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage> with StateMixin {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String errorMessage = '';
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    dateOfBirthController.dispose();
+    super.dispose();
+  }
+
+  Future<void> signInWithGoogle() async {
+    final GoogleSignIn googleSignIn = GoogleSignIn(
+      scopes: [
+        'email',
+        'profile',
+        'https://www.googleapis.com/auth/user.birthday.read',
+      ],
+    );
+
+    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+    if (googleUser == null) {
+      // The user canceled the sign-in
+      return;
+    }
+
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    try {
+      UserCredential userCredential = await _auth.signInWithCredential(credential);
+      User? user = userCredential.user;
+
+      if (user != null) {
+        DocumentSnapshot userData = await _firestore.collection('users').doc(user.uid).get();
+
+        if (!userData.exists) {
+          // Fetch user's date of birth using People API
+          try {
+            final apiKey = 'YOUR_BROWSER_API_KEY'; // Replace with your API key
+            final http.Client client = http.Client();
+
+            final response = await client.get(
+              Uri.parse(
+                'https://people.googleapis.com/v1/people/me?personFields=birthdays&key=$apiKey',
+              ),
+              headers: {
+                'Authorization': 'Bearer ${googleAuth.accessToken}',
+              },
+            );
+
+            if (response.statusCode == 200) {
+              final profile = json.decode(response.body);
+              final birthday = profile['birthdays']?.first['date'];
+              final formattedBirthday = birthday != null
+                  ? '${birthday['day']}/${birthday['month']}/${birthday['year']}'
+                  : null;
+
+              if (!isDisposed) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SignUpPage(
+                      prefilledData: {
+                        'fullName': user.displayName,
+                        'email': user.email,
+                        'phoneNumber': user.phoneNumber,
+                        'dateOfBirth': formattedBirthday,
+                      },
+                      signUpMethod: 'Google',
+                    ),
+                  ),
+                );
+              }
+            } else {
+              throw Exception('Failed to fetch user data');
+            }
+          } catch (e) {
+            print('Error fetching user data: $e');
+            if (!isDisposed) {
+              setState(() {
+                errorMessage = 'Error fetching user data: $e';
+              });
+            }
+          }
+        } else {
+          String fullName = userData['fullName'] ?? '';
+          if (!isDisposed) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomePage(
+                  fullName: fullName,
+                  userId: user.uid,
+                  isAuthenticated: true,
+                ),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (!isDisposed) {
+        setState(() {
+          errorMessage = 'An error occurred. Please try again. ${e.toString()}';
+        });
+      }
+    }
+  }
 
   Future<void> signIn() async {
     try {
@@ -27,56 +142,66 @@ class _LoginPageState extends State<LoginPage> {
 
       if (user != null) {
         DocumentSnapshot userData = await _firestore.collection('users').doc(user.uid).get();
-        String fullName = userData['fullName'];
+        String fullName = userData.exists ? userData['fullName'] ?? '' : '';
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(
-              fullName: fullName,
-              userId: user.uid,
-              isAuthenticated: true, // ensure isAuthenticated is true after login
+        if (!isDisposed) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(
+                fullName: fullName,
+                userId: user.uid,
+                isAuthenticated: true,
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
-      setState(() {
-        switch (e.code) {
-          case 'user-not-found':
-            errorMessage = 'No user found for that email.';
-            break;
-          case 'wrong-password':
-            errorMessage = 'Wrong password provided for that user.';
-            break;
-          case 'invalid-email':
-            errorMessage = 'The email address is badly formatted.';
-            break;
-          case 'user-disabled':
-            errorMessage = 'The user account has been disabled.';
-            break;
-          case 'too-many-requests':
-            errorMessage = 'Too many requests. Try again later.';
-            break;
-          case 'invalid-credential':
-            errorMessage = "Incorrect email or password";
-            break;
-          default:
-            errorMessage = 'An unknown error occurred: ${e.message}';
-        }
-      });
+      if (!isDisposed) {
+        setState(() {
+          switch (e.code) {
+            case 'user-not-found':
+              errorMessage = 'No user found for that email.';
+              break;
+            case 'wrong-password':
+              errorMessage = 'Wrong password provided for that user.';
+              break;
+            case 'invalid-email':
+              errorMessage = 'The email address is badly formatted.';
+              break;
+            case 'user-disabled':
+              errorMessage = 'The user account has been disabled.';
+              break;
+            case 'too-many-requests':
+              errorMessage = 'Too many requests. Try again later.';
+              break;
+            case 'invalid-credential':
+              errorMessage = "Incorrect email or password";
+              break;
+            default:
+              errorMessage = 'An unknown error occurred: ${e.message}';
+          }
+        });
+      }
     } catch (e) {
       print("General exception: ${e.toString()}");
-      setState(() {
-        errorMessage = 'An error occurred. Please try again. ${e.toString()}';
-      });
+      if (!isDisposed) {
+        setState(() {
+          errorMessage = 'An error occurred. Please try again. ${e.toString()}';
+        });
+      }
     }
   }
 
   void navigateToSignUp() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SignUp()), // Change to sign up page later
+      MaterialPageRoute(
+        builder: (context) => SignUpPage(
+          signUpMethod: 'Email',
+        ),
+      ),
     );
   }
 
@@ -102,7 +227,7 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              SizedBox(height: 100,),
+              SizedBox(height: 50),
               Align(
                 alignment: Alignment.centerLeft,
                 child: SizedBox(
@@ -146,7 +271,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               SizedBox(height: 30.0),
               _buildEmailSection(context),
-              SizedBox(height: 20,),
+              SizedBox(height: 20),
               _buildPasswordSection(context),
               SizedBox(height: 30.0),
               if (errorMessage.isNotEmpty)
@@ -160,9 +285,9 @@ class _LoginPageState extends State<LoginPage> {
               Container(
                 width: 200.0,
                 decoration: BoxDecoration(
-                  color: Color(0xFF9CE1CF),
+                  color: Color.fromRGBO(226, 192, 68, 1),
                   borderRadius: BorderRadius.circular(40),
-                  border: Border.all(color: Color.fromARGB(255, 122, 185, 168)),
+                  border: Border.all(color: Color.fromRGBO(226, 192, 68, 1)),
                 ),
                 child: OutlinedButton(
                   onPressed: signIn,
@@ -183,20 +308,97 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(top: 20),
-                child: GestureDetector(
-                  onTap: navigateToSignUp,
-                  child: Text(
-                    "Create an account",
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w300,
-                      fontSize: 14,
-                      decoration: TextDecoration.underline,
-                      decorationColor: Color.fromRGBO(198, 205, 250, 1),
-                      color: Color.fromRGBO(198, 205, 250, 1),
+              SizedBox(height: 20),
+              Container(
+                width: 230.0,
+                decoration: BoxDecoration(
+                  color: Color.fromRGBO(188, 71, 73, 1),
+                  borderRadius: BorderRadius.circular(40),
+                  border: Border.all(color: Color.fromRGBO(188, 71, 73, 1)),
+                ),
+                child: OutlinedButton(
+                  onPressed: () async {
+                    try {
+                      await signInWithGoogle();
+
+                      User? user = _auth.currentUser;
+
+                      if (user != null) {
+                        DocumentSnapshot userData = await _firestore.collection('users').doc(user.uid).get();
+
+                        if (!userData.exists || userData.data() == null) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SignUpPage(
+                                prefilledData: {
+                                  'fullName': user.displayName,
+                                  'email': user.email,
+                                  'phoneNumber': user.phoneNumber,
+                                  'dateOfBirth': dateOfBirthController.text,
+                                },
+                                signUpMethod: 'Google',
+                              ),
+                            ),
+                          );
+                        } else {
+                          String fullName = userData.data().toString().contains('fullName') ? userData['fullName'] : '';
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HomePage(
+                                fullName: fullName,
+                                userId: user.uid,
+                                isAuthenticated: true,
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      if (!isDisposed) {
+                        setState(() {
+                          errorMessage = 'An error occurred. Please try again. ${e.toString()}';
+                        });
+                      }
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    side: BorderSide(color: Colors.transparent),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/google_logo.png',
+                        height: 24.0,
+                      ),
+                      SizedBox(width: 12.0),
+                      Text(
+                        "Login with Google",
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16.0,
+                          color: Color.fromRGBO(37, 37, 37, 1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 20),
+              GestureDetector(
+                onTap: navigateToSignUp,
+                child: Text(
+                  "Don't have an account? Sign up",
+                  style: TextStyle(
+                    color: Color.fromRGBO(255, 255, 255, 1),
+                    fontSize: 14.0,
+                    decoration: TextDecoration.underline,
                   ),
                 ),
               ),
@@ -275,5 +477,17 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+}
+
+mixin StateMixin<T extends StatefulWidget> on State<T> {
+  bool _isDisposed = false;
+
+  bool get isDisposed => _isDisposed;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 }

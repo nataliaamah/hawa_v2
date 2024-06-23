@@ -16,22 +16,23 @@ void main() async {
 }
 
 class HawaApp extends StatefulWidget {
-  @override
-  _HawaAppState createState() => _HawaAppState();
   final bool seenOnboard;
   const HawaApp({Key? key, required this.seenOnboard}) : super(key: key);
+
+  @override
+  _HawaAppState createState() => _HawaAppState();
 }
 
 class _HawaAppState extends State<HawaApp> {
   bool _seenOnboard = false;
   String? fullName;
   String? userId;
+  bool _isLoading = true; // Add a loading state
 
   @override
   void initState() {
     super.initState();
     _checkOnboardStatus();
-    _fetchUserData();
   }
 
   Future<void> _checkOnboardStatus() async {
@@ -40,6 +41,7 @@ class _HawaAppState extends State<HawaApp> {
     setState(() {
       _seenOnboard = seenOnboard ?? false;
     });
+    await _fetchUserData(); // Fetch user data after checking onboarding status
   }
 
   Future<void> _fetchUserData() async {
@@ -51,16 +53,31 @@ class _HawaAppState extends State<HawaApp> {
         userId = user.uid;
       });
     }
+    setState(() {
+      _isLoading = false; // Set loading state to false after fetching data or if no user is logged in
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
     return MaterialApp(
       title: 'Hawa v1',
       home: _seenOnboard
-          ? (FirebaseAuth.instance.currentUser != null && fullName != null
-              ? HomePage(fullName: fullName!, userId: userId!)
-              : LoginPage())
+          ? HomePage(
+              fullName: fullName ?? 'Guest',
+              userId: userId ?? '',
+              isAuthenticated: userId != null,
+            )
           : Onboarding(
               onCompleted: () async {
                 final prefs = await SharedPreferences.getInstance();
@@ -70,7 +87,11 @@ class _HawaAppState extends State<HawaApp> {
                 });
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginPage()),
+                  MaterialPageRoute(builder: (context) => HomePage(
+                    fullName: 'Guest',
+                    userId: '',
+                    isAuthenticated: false,
+                  )),
                 );
               },
             ),

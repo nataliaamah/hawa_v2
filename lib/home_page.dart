@@ -21,6 +21,7 @@ import 'package:telephony/telephony.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:location/location.dart';
+import 'package:hawa_v1/contact_emergency.dart';
 
 class HomePage extends StatefulWidget {
   final String fullName;
@@ -47,22 +48,28 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool _isAuthenticated = false;
   Completer<void>? _popupCompleter;
 
-  static const platform = MethodChannel('com.example.tesr/location');
+  static const platform = MethodChannel('com.hawa.application/location');
 
   @override
   void initState() {
     super.initState();
     _isAuthenticated = widget.isAuthenticated;
     _startGlowAnimation();
-    _fetchEmergencyNumber();
+    if (_isAuthenticated) {
+      _fetchEmergencyNumber();
+    }
     _initializeCamera();
-    _startShakeDetection(); // Start shake detection when the home page is opened
+    if (_isAuthenticated) {
+      _startShakeDetection(); // Start shake detection only if the user is authenticated
+    }
   }
 
   @override
   void dispose() {
     _timer.cancel();
-    _gyroscopeSubscription.cancel();
+    if (_isAuthenticated) {
+      _gyroscopeSubscription.cancel();
+    }
     _cameraController.dispose();
     super.dispose();
   }
@@ -120,13 +127,20 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             child: ListBody(
               children: <Widget>[
                 Text('This feature is locked.'),
+                Text('Automate this process by logging in.'),
                 Text('Please log in or sign up to access it.'),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Login'),
+              child: Text(
+                'Login',
+                style: TextStyle(
+                  color: Colors.blue,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginPage())).then((value) {
                   // Check if the user is authenticated after the login page returns
@@ -141,7 +155,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               },
             ),
             TextButton(
-              child: Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.red,
+                ),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
                 if (!_popupCompleter!.isCompleted) {
@@ -156,10 +175,78 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     await _popupCompleter!.future;
   }
 
+  Future<bool> _showEnterEmergencyContactDialog() async {
+    TextEditingController emergencyContactController = TextEditingController();
+
+    bool? contactEntered = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false, // User must tap a button to dismiss
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Enter Emergency Contact'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emergencyContactController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  hintText: 'Enter emergency contact number',
+                ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Automate this process by logging in.',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Submit',
+                style: TextStyle(
+                  color: Colors.blue,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+              onPressed: () {
+                if (emergencyContactController.text.isNotEmpty) {
+                  setState(() {
+                    _emergencyNumber = emergencyContactController.text;
+                  });
+                  Navigator.of(context).pop(true); // Contact entered
+                }
+              },
+            ),
+            TextButton(
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.red,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(false); // Contact not entered
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    return contactEntered ?? false;
+  }
+
   Future<void> _initiateCall() async {
     if (!_isAuthenticated) {
-      await _showLoginRequiredDialog();
-      return;
+      bool contactEntered = await _showEnterEmergencyContactDialog();
+      if (!contactEntered) {
+        return; // User did not enter a contact, do not proceed
+      }
     }
 
     if (_emergencyNumber.isNotEmpty) {
@@ -197,8 +284,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   // Function to take 5 successive pictures
   Future<void> _takePictures() async {
     if (!_isAuthenticated) {
-      await _showLoginRequiredDialog();
-      return;
+      bool contactEntered = await _showEnterEmergencyContactDialog();
+      if (!contactEntered) {
+        return; // User did not enter a contact, do not proceed
+      }
     }
 
     try {
@@ -216,7 +305,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         logger.d('Image $i uploaded to $imageUrl');
       }
 
-      await _sendSMSWithPicturesAndLocation(imageUrls);
+      await _saveDataToFirestore(imageUrls);
     } catch (e) {
       logger.e('Error taking pictures: $e');
     }
@@ -233,52 +322,41 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return returnURL;
   }
 
-  // Function to send SMS with picture URLs and location
-  Future<void> _sendSMSWithPicturesAndLocation(List<String> imageUrls) async {
-    if (!_isAuthenticated) {
-      await _showLoginRequiredDialog();
-      return;
-    }
+  // Function to save data to Firestore
+  Future<void> _saveDataToFirestore(List<String> imageUrls) async {
+    Location location = new Location();
 
-    bool? permissionsGranted = await telephony.requestPhoneAndSmsPermissions;
-    if (permissionsGranted ?? false) {
-      Location location = new Location();
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
+    LocationData _locationData;
 
-      bool _serviceEnabled;
-      PermissionStatus _permissionGranted;
-      LocationData _locationData;
-
-      _serviceEnabled = await location.serviceEnabled();
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
       if (!_serviceEnabled) {
-        _serviceEnabled = await location.requestService();
-        if (!_serviceEnabled) {
-          return;
-        }
+        return;
       }
-
-      _permissionGranted = await location.hasPermission();
-      if (_permissionGranted == PermissionStatus.denied) {
-        _permissionGranted = await location.requestPermission();
-        if (_permissionGranted != PermissionStatus.granted) {
-          return;
-        }
-      }
-
-      _locationData = await location.getLocation();
-
-      String imagesMessage = imageUrls.map((url) => 'Here is the picture: $url').join('\n');
-
-      telephony.sendSms(
-        to: _emergencyNumber,
-        message: 'Emergency! $imagesMessage\nLocation: https://www.google.com/maps/search/?api=1&query=${_locationData.latitude},${_locationData.longitude}',
-      ).then((_) {
-        logger.d('SMS sent successfully with image URLs and location.');
-      }).catchError((error) {
-        logger.e('Failed to send SMS: $error');
-      });
-    } else {
-      logger.w('SMS permission not granted.');
     }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+
+    _locationData = await location.getLocation();
+
+    await FirebaseFirestore.instance.collection('contact_emergency').add({
+      'userId': widget.userId,
+      'emergencyNumber': _emergencyNumber,
+      'imageUrls': imageUrls,
+      'location': GeoPoint(_locationData.latitude!, _locationData.longitude!),
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    logger.d('Data saved to Firestore successfully.');
   }
 
   Future<void> _callEmergencyNumber() async {
@@ -310,7 +388,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (permissionsGranted ?? false) {
       telephony.sendSms(
         to: _emergencyNumber,
-        message: "Emergency! This is Hawa Emergency Services. A large movement was detected from " + getFirstName(widget.fullName) +", indicating a potential emergency. Please contact me immediately.",
+        message: "Emergency! This is Hawa Emergency Services. A large movement was detected from " + getFirstName(widget.fullName) + ", indicating a potential emergency. Please contact me immediately.",
       ).then((_) {
         logger.d('Emergency SMS sent successfully.');
       }).catchError((error) {
@@ -338,7 +416,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           width: 200,
         ),
       ),
-      drawer: AppDrawer(),
+      drawer: AppDrawer(isAuthenticated: _isAuthenticated, userId: widget.userId),
       body: Builder(
         builder: (context) => Stack(
           children: [
@@ -362,7 +440,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   padding: EdgeInsets.only(right: 20),
                   child: IconButton(
                     onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId, isAuthenticated: widget.isAuthenticated,)));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId, isAuthenticated: widget.isAuthenticated))).then((value) {
+                        setState(() {
+                          // This will refresh the state and update the welcome message
+                        });
+                      });
                     },
                     icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromARGB(255, 10, 38, 39)),
                   ),
@@ -401,19 +483,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             'S.O.S',
                             style: GoogleFonts.quicksand(
                               textStyle: TextStyle(
-                                color: Colors.teal[900], 
+                                color: Colors.teal[900],
                                 fontWeight: FontWeight.w900,
-                                fontSize: 55, 
-                              ),
-                            ),
-                          ),
-                          Text(
-                            'Press in case of emergencies',
-                            style: GoogleFonts.quicksand(
-                              textStyle: TextStyle(
-                                color: Colors.teal[900], 
-                                fontWeight: FontWeight.w400,
-                                fontSize: 15, 
+                                fontSize: 55,
                               ),
                             ),
                           ),
@@ -443,6 +515,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         ),
                       ),
                     ),
+                    if (!widget.isAuthenticated)
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => LoginPage()),
+                          );
+                        },
+                        child: Text(
+                          'Login',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
                     SizedBox(height: 60),
                     Wrap(
                       spacing: 15,
@@ -510,59 +599,148 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 }
 
 class AppDrawer extends StatelessWidget {
+  final bool isAuthenticated;
+  final String userId;
+
+  AppDrawer({required this.isAuthenticated, required this.userId});
+
+  Future<String?> _fetchPhoneNumber() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      return userDoc['phoneNumber'];
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
       backgroundColor: Color.fromARGB(255, 45, 45, 45),
       child: ListView(
         children: <Widget>[
-          SizedBox(height: 30,),
+          SizedBox(height: 30),
           ListTile(
             contentPadding: EdgeInsets.only(left: 230),
-            leading: Icon(Icons.close_rounded, size: 30, color: Color.fromRGBO(255, 255, 255, 1),),
+            leading: Icon(Icons.close_rounded, size: 30, color: Color.fromRGBO(255, 255, 255, 1)),
             onTap: () {
-              Navigator.pop(context);  
+              Navigator.pop(context);
             },
           ),
-          SizedBox(height: 100,),
+          SizedBox(height: 100),
           ListTile(
             contentPadding: EdgeInsets.only(left: 50),
-            title: Text('Emergency Alerts', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1), fontWeight: FontWeight.w500),),
+            title: Text('Emergency Alerts', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1), fontWeight: FontWeight.w500)),
+            onTap: () {
+              if (isAuthenticated) {
+                _fetchPhoneNumber().then((phoneNumber) {
+                  if (phoneNumber != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ContactEmergencyPage(
+                          phoneNumber: phoneNumber,
+                          fullName: 'User Full Name', // Pass the full name here
+                          userId: userId, // Pass the userId here
+                          isAuthenticated: isAuthenticated, // Pass the authentication status here
+                        ),
+                      ),
+                    ).then((_) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => HomePage(isAuthenticated: isAuthenticated, fullName: 'User Full Name', userId: userId)),
+                      );
+                    });
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Phone number not found'),
+                      ),
+                    );
+                  }
+                });
+              } else {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Feature Locked'),
+                      content: SingleChildScrollView(
+                        child: ListBody(
+                          children: <Widget>[
+                            Text('This feature is locked.'),
+                            Text('Please log in or sign up to access it.'),
+                          ],
+                        ),
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text('Login'),
+                          onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginPage())).then((value) {
+                              // Check if the user is authenticated after the login page returns
+                              User? user = FirebaseAuth.instance.currentUser;
+                              if (user != null) {
+                                Navigator.of(context).pop(); // Close the dialog
+                              }
+                            });
+                          },
+                        ),
+                        TextButton(
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }
+            },
+          ),
+          SizedBox(height: 20),
+          ListTile(
+            contentPadding: EdgeInsets.only(left: 50),
+            title: Text('About Us', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1), fontWeight: FontWeight.w500)),
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => AboutUsPage()));
             },
           ),
-          SizedBox(height: 20,),
+          SizedBox(height: 20),
           ListTile(
             contentPadding: EdgeInsets.only(left: 50),
-            title: Text('About Us', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1), fontWeight: FontWeight.w500),),
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => AboutUsPage()));
-            },
-          ),
-          SizedBox(height: 20,),
-          ListTile(
-            contentPadding: EdgeInsets.only(left: 50),
-            title: Text('Contact Us', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1), fontWeight: FontWeight.w500),),
+            title: Text('Contact Us', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1), fontWeight: FontWeight.w500)),
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => ContactUsPage()));
             },
           ),
-          SizedBox(height: 300,),
+          SizedBox(height: 250),
           ListTile(
-            leading: Icon(Icons.logout_rounded, size: 25, color: Color.fromRGBO(255, 255, 255, 1),),
+            leading: Icon(Icons.logout_rounded, size: 25, color: Color.fromRGBO(255, 255, 255, 1)),
             contentPadding: EdgeInsets.only(left: 50),
-            title: Text('Logout', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1),),),
+            title: Text(
+              isAuthenticated ? 'Logout' : 'Login/Sign Up',
+              style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1)),
+            ),
             onTap: () {
-              // Sign out the user
-              FirebaseAuth.instance.signOut().then((_) {
-                // Navigate to HomePage with limited functionalities
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomePage(isAuthenticated: false, fullName: 'Guest', userId: '',)),
-                  (route) => false, // Remove all previous routes
-                );
-              });
+              if (isAuthenticated) {
+                // Sign out the user
+                FirebaseAuth.instance.signOut().then((_) {
+                  // Navigate to HomePage with limited functionalities
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => HomePage(isAuthenticated: false, fullName: 'Guest', userId: '')),
+                    (route) => false, // Remove all previous routes
+                  );
+                });
+              } else {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+              }
             },
           ),
         ],

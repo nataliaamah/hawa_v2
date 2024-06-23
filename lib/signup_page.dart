@@ -1,50 +1,72 @@
 import 'package:flutter/material.dart';
-import 'package:hawa_v1/signup_page2.dart'; // Update the import if needed
-import 'package:hawa_v1/login_page.dart';
-import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'signup_page2.dart';
 
-class SignUp extends StatefulWidget {
-  SignUp({Key? key}) : super(key: key);
+class SignUpPage extends StatefulWidget {
+  final Map<String, dynamic>? prefilledData;
+  final String signUpMethod;
+
+  SignUpPage({this.prefilledData, required this.signUpMethod});
 
   @override
-  _SignUpState createState() => _SignUpState();
+  _SignUpPageState createState() => _SignUpPageState();
 }
 
-class _SignUpState extends State<SignUp> {
+class _SignUpPageState extends State<SignUpPage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _formKey = GlobalKey<FormState>();
-  bool _autoValidate = false;
-  final TextEditingController fullNameController = TextEditingController();
-  final TextEditingController dateOfBirthController = TextEditingController();
-  final TextEditingController bloodController = TextEditingController();
-  final TextEditingController allergiesController = TextEditingController();
-  final TextEditingController medicationController = TextEditingController();
-  final TextEditingController phoneNumberController = TextEditingController(); // Add this line
+  String errorMessage = '';
 
-  Future<void> _selectDate(BuildContext context) async {
-    DateTime? selectedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (selectedDate != null) {
-      dateOfBirthController.text = DateFormat('dd-MM-yyyy').format(selectedDate);
+  TextEditingController fullNameController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController phoneNumberController = TextEditingController();
+  TextEditingController dateOfBirthController = TextEditingController();
+  TextEditingController bloodTypeController = TextEditingController();
+  TextEditingController allergiesController = TextEditingController();
+  TextEditingController medicationController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.prefilledData != null) {
+      fullNameController.text = widget.prefilledData?['fullName'] ?? '';
+      emailController.text = widget.prefilledData?['email'] ?? '';
+      phoneNumberController.text = widget.prefilledData?['phoneNumber'] ?? '';
+      dateOfBirthController.text = widget.prefilledData?['dateOfBirth'] ?? '';
     }
   }
 
-  void _submitForm(BuildContext context) {
+  Future<void> signUp() async {
     if (_formKey.currentState!.validate()) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => SignUp2(
-        fullName: fullNameController.text,
-        dateOfBirth: dateOfBirthController.text,
-        bloodType: bloodController.text,
-        allergies: allergiesController.text,
-        medication: medicationController.text,
-        phoneNumber: phoneNumberController.text,
-      )));
-    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SignUp2(
+            fullName: fullNameController.text,
+            dateOfBirth: dateOfBirthController.text,
+            bloodType: bloodTypeController.text,
+            allergies: allergiesController.text,
+            medication: medicationController.text,
+            phoneNumber: phoneNumberController.text,
+            signUpMethod: widget.signUpMethod,
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2101),
+    );
+    if (pickedDate != null) {
       setState(() {
-        _autoValidate = true;
+        dateOfBirthController.text = "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
       });
     }
   }
@@ -60,9 +82,6 @@ class _SignUpState extends State<SignUp> {
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Form(
               key: _formKey,
-              autovalidateMode: _autoValidate
-                  ? AutovalidateMode.always
-                  : AutovalidateMode.disabled,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -94,7 +113,7 @@ class _SignUpState extends State<SignUp> {
                               color: Color.fromRGBO(255, 255, 255, 1),
                             ),
                           ),
-                          WidgetSpan(child: SizedBox(height: 40)), // Add space
+                          WidgetSpan(child: SizedBox(height: 40)),
                           TextSpan(
                             text: "Step 1/3\n",
                             style: TextStyle(
@@ -104,7 +123,7 @@ class _SignUpState extends State<SignUp> {
                               color: Color.fromRGBO(255, 255, 255, 1),
                             ),
                           ),
-                          WidgetSpan(child: SizedBox(height: 20)), // Add space
+                          WidgetSpan(child: SizedBox(height: 20)),
                           TextSpan(
                             text: "Enter your personal information",
                             style: TextStyle(
@@ -123,7 +142,7 @@ class _SignUpState extends State<SignUp> {
                   _buildFullNameSection(context),
                   SizedBox(height: 20),
                   _buildDateOfBirthSection(context),
-                  SizedBox(height: 20),                  
+                  SizedBox(height: 20),
                   _buildPhoneNumberSection(context),
                   SizedBox(height: 20),
                   _buildBloodTypeSection(context),
@@ -139,7 +158,7 @@ class _SignUpState extends State<SignUp> {
                       child: SizedBox(
                         width: 150,
                         child: ElevatedButton(
-                          onPressed: () => _submitForm(context),
+                          onPressed: () => signUp(),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFF9CE1CF),
                             foregroundColor: const Color.fromARGB(255, 0, 0, 0),
@@ -198,8 +217,8 @@ class _SignUpState extends State<SignUp> {
                   filled: true,
                   fillColor: Color.fromARGB(255, 52, 81, 82),
                   enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -213,13 +232,13 @@ class _SignUpState extends State<SignUp> {
                     fontWeight: FontWeight.w300
                   ),
                 ),
+                style: TextStyle(color: Colors.white), // Set the entered text color to white
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Full name is required';
                   }
                   return null;
                 },
-                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
               ),
             ),
           ),
@@ -277,13 +296,13 @@ class _SignUpState extends State<SignUp> {
                       ),
                       suffixIcon: Icon(Icons.calendar_today, color: Color(0xFF9CE1CF)),
                     ),
+                    style: TextStyle(color: Colors.white),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Date of birth is required';
                       }
                       return null;
                     },
-                    style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
                   ),
                 ),
               ),
@@ -319,7 +338,7 @@ class _SignUpState extends State<SignUp> {
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontWeight: FontWeight.w300,
-                      fontSize: 12.0, // Smaller font size
+                      fontSize: 12.0,
                       color: Color.fromARGB(255, 231, 255, 249),
                     ),
                   ),
@@ -346,7 +365,7 @@ class _SignUpState extends State<SignUp> {
                   ),
                   contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                 ),
-                dropdownColor: Colors.white, // Set dropdown background color
+                dropdownColor: Colors.white,
                 hint: Text(
                   'Select blood type',
                   style: TextStyle(
@@ -357,13 +376,13 @@ class _SignUpState extends State<SignUp> {
                 ),
                 iconEnabledColor: Color(0xFF9CE1CF),
                 iconDisabledColor: Colors.grey,
-                style: TextStyle(color: Colors.black), // Set dropdown text color to black
+                style: TextStyle(color: Colors.black),
                 selectedItemBuilder: (BuildContext context) {
                   return <String>['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
                       .map<Widget>((String value) {
                     return Text(
                       value,
-                      style: TextStyle(color: Colors.white), // Set input field text color to white
+                      style: TextStyle(color: Colors.white),
                     );
                   }).toList();
                 },
@@ -375,7 +394,7 @@ class _SignUpState extends State<SignUp> {
                   );
                 }).toList(),
                 onChanged: (String? newValue) {
-                  bloodController.text = newValue!;
+                  bloodTypeController.text = newValue!;
                 },
               ),
             ),
@@ -410,7 +429,7 @@ class _SignUpState extends State<SignUp> {
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontWeight: FontWeight.w300,
-                      fontSize: 10.0, // Smaller font size
+                      fontSize: 10.0,
                       color: Color.fromARGB(255, 231, 255, 249),
                     ),
                   ),
@@ -479,7 +498,7 @@ class _SignUpState extends State<SignUp> {
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontWeight: FontWeight.w300,
-                      fontSize: 10.0, // Smaller font size
+                      fontSize: 10.0,
                       color: Color.fromARGB(255, 231, 255, 249),
                     ),
                   ),
@@ -569,6 +588,7 @@ class _SignUpState extends State<SignUp> {
                     fontWeight: FontWeight.w300,
                   ),
                 ),
+                style: TextStyle(color: Colors.white),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Phone number is required';
@@ -578,16 +598,11 @@ class _SignUpState extends State<SignUp> {
                   }
                   return null;
                 },
-                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
               ),
             ),
           ),
         ],
       ),
     );
-  }
-
-  void backToLogin(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
   }
 }
