@@ -46,7 +46,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       _dateOfBirthController.text = doc['dateOfBirth'];
       _bloodTypeController.text = doc['bloodType'];
       _allergiesController.text = doc['allergies'];
-      _medicationController.text = doc['medication'];
+      _medicationController.text = doc['currentMedication'];
       _contactNameController.text = doc['contactName'];
       _contactNumberController.text = doc['contactNumber'];
     });
@@ -74,11 +74,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 10, 38, 39),
+      backgroundColor: const Color.fromRGBO(2, 1, 34, 1),
       appBar: AppBar(
         title: Text('Edit Profile', style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),),
         centerTitle: true,
-        backgroundColor: Color.fromARGB(255, 10, 38, 39),
+        backgroundColor: Color.fromRGBO(2, 1, 34, 1),
         iconTheme: IconThemeData(color: Color.fromARGB(255, 255, 255, 255)),
       ),
       body: _fullNameController.text.isEmpty
@@ -135,12 +135,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   TextFormField(
                                     controller: _bloodTypeController,
                                     decoration: InputDecoration(labelText: 'Blood Type'),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter your blood type';
-                                      }
-                                      return null;
-                                    },
                                   ),
                                   TextFormField(
                                     controller: _allergiesController,
@@ -195,7 +189,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                             child: Text('Save'),
                                             style: ElevatedButton.styleFrom(
                                               foregroundColor: Colors.black87,
-                                              backgroundColor: Colors.teal[700],
+                                              backgroundColor: Color.fromRGBO(226, 192, 68, 1),
                                             ),
                                           ),
                                         ),

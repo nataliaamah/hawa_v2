@@ -39,7 +39,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   List<bool> _buttonStates = [false, false, false, false];
   String _emergencyNumber = "";
   final Logger logger = Logger(); // Initialize the logger
-  late CameraController _cameraController;
+  CameraController? _cameraController;
   late Future<void> _initializeControllerFuture;
   final Telephony telephony = Telephony.instance;
   bool _emergencyMessageSent = false;
@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (_isAuthenticated) {
       _gyroscopeSubscription.cancel();
     }
-    _cameraController.dispose();
+    _cameraController?.dispose();
     super.dispose();
   }
 
@@ -274,10 +274,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   // Function to initialize the camera
   void _initializeCamera() async {
-    final cameras = await availableCameras();
-    final firstCamera = cameras.first;
-    _cameraController = CameraController(firstCamera, ResolutionPreset.high);
-    _initializeControllerFuture = _cameraController.initialize();
+    try {
+      final cameras = await availableCameras();
+      final firstCamera = cameras.first;
+      _cameraController = CameraController(firstCamera, ResolutionPreset.high);
+      _initializeControllerFuture = _cameraController!.initialize();
+    } catch (e) {
+      logger.e('Error initializing camera: $e');
+    }
   }
 
   // Function to take 5 successive pictures
@@ -294,7 +298,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
       List<String> imageUrls = [];
       for (int i = 0; i < 5; i++) {
-        final image = await _cameraController.takePicture();
+        final image = await _cameraController!.takePicture();
         final directory = await getApplicationDocumentsDirectory();
         final imagePath = path.join(directory.path, '${DateTime.now()}_$i.png');
         await image.saveTo(imagePath);
@@ -304,7 +308,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         logger.d('Image $i uploaded to $imageUrl');
       }
 
-      await _saveDataToFirestore(imageUrls);
+      await _saveEmergencyDataToFirestore(imageUrls, false);
     } catch (e) {
       logger.e('Error taking pictures: $e');
     }
@@ -322,7 +326,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   // Function to save data to Firestore
-  Future<void> _saveDataToFirestore(List<String> imageUrls) async {
+  Future<void> _saveEmergencyDataToFirestore([List<String> imageUrls = const [], bool isShakeEmergency = false]) async {
     Location location = new Location();
 
     bool _serviceEnabled;
@@ -353,6 +357,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       'imageUrls': imageUrls,
       'location': GeoPoint(_locationData.latitude!, _locationData.longitude!),
       'timestamp': FieldValue.serverTimestamp(),
+      'resolved': false,
+      'isShakeEmergency': isShakeEmergency,
     });
 
     logger.d('Data saved to Firestore successfully.');
@@ -368,34 +374,24 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _startShakeDetection() {
-    _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent event) {
-      final double shakeThreshold = 2.5; // Adjust this value based on your requirements
-      if (!_emergencyMessageSent && (event.x.abs() > shakeThreshold || event.y.abs() > shakeThreshold || event.z.abs() > shakeThreshold)) {
-        _sendEmergencyMessage();
-        _emergencyMessageSent = true;
-      }
-    });
-  }
+  _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent event) {
+    final double shakeThreshold = 5.0; // Increased value to detect larger shakes
+    if (!_emergencyMessageSent && (event.x.abs() > shakeThreshold || event.y.abs() > shakeThreshold || event.z.abs() > shakeThreshold)) {
+      _handleShakeEmergency();
+      _emergencyMessageSent = true;
+    }
+  });
+}
 
-  void _sendEmergencyMessage() async {
+
+  void _handleShakeEmergency() async {
     if (!_isAuthenticated) {
       await _showLoginRequiredDialog();
       return;
     }
 
-    bool? permissionsGranted = await telephony.requestPhoneAndSmsPermissions;
-    if (permissionsGranted ?? false) {
-      telephony.sendSms(
-        to: _emergencyNumber,
-        message: "Emergency! This is Hawa Emergency Services. A large movement was detected from " + getFirstName(widget.fullName) + ", indicating a potential emergency. Please contact me immediately.",
-      ).then((_) {
-        logger.d('Emergency SMS sent successfully.');
-      }).catchError((error) {
-        logger.e('Failed to send emergency SMS: $error');
-      });
-    } else {
-      logger.w('SMS permission not granted.');
-    }
+    // Save data to Firestore indicating a shake emergency
+    await _saveEmergencyDataToFirestore([], true);
   }
 
   @override
@@ -403,9 +399,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     String firstName = getFirstName(widget.fullName);
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 10, 38, 39),
+      backgroundColor: const Color.fromRGBO(197, 197, 197, 1),
       appBar: AppBar(
-        backgroundColor: Colors.teal[700],
+        backgroundColor: Color.fromRGBO(2, 1, 34, 1),
         elevation: 0,
         automaticallyImplyLeading: false,
         centerTitle: true,
@@ -421,7 +417,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           children: [
             CustomPaint(
               size: Size(MediaQuery.of(context).size.width, 250),
-              painter: HalfCirclePainter(Colors.teal[700]!),
+              painter: HalfCirclePainter( Color.fromRGBO(2, 1, 34, 1)),
             ),
             Row(
               children: [
@@ -431,7 +427,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     onTap: () {
                       Scaffold.of(context).openDrawer();
                     },
-                    child: Icon(Icons.menu_rounded, color: Color.fromARGB(255, 10, 38, 39), size: 40),
+                    child: Icon(Icons.menu_rounded, color: Color.fromRGBO(197, 197, 197, 1), size: 40),
                   ),
                 ),
                 Spacer(),
@@ -445,7 +441,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         });
                       });
                     },
-                    icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromARGB(255, 10, 38, 39)),
+                    icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromRGBO(197, 197, 197, 1)),
                   ),
                 ),
               ],
@@ -461,7 +457,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Color.fromARGB(255, 80, 190, 179).withOpacity(0.6),
+                          color: Color.fromRGBO(248, 51, 60, 0.6),
                           spreadRadius: _glowRadius,
                           blurRadius: _glowRadius,
                         ),
@@ -472,7 +468,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         if (!_isAuthenticated) {
                           await _showLoginRequiredDialog();
                         } else {
-                          // SOS button action
+                          _handleShakeEmergency();
                         }
                       },
                       child: Column(
@@ -482,7 +478,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             'S.O.S',
                             style: GoogleFonts.quicksand(
                               textStyle: TextStyle(
-                                color: Colors.teal[900],
+                                color: const Color.fromARGB(255, 255, 255, 255),
                                 fontWeight: FontWeight.w900,
                                 fontSize: 55,
                               ),
@@ -492,7 +488,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       ),
                       style: ElevatedButton.styleFrom(
                         shape: CircleBorder(),
-                        backgroundColor: Colors.teal[200],
+                        backgroundColor: Color.fromRGBO(248, 51, 60, 1),
                         padding: EdgeInsets.all(83),
                       ),
                     ),
@@ -508,7 +504,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         style: GoogleFonts.quicksand(
                           textStyle: TextStyle(
                             fontSize: 30,
-                            color: const Color.fromARGB(255, 255, 255, 255),
+                            color: const Color.fromRGBO(2, 1, 34, 1),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -551,8 +547,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             ],
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _buttonStates[0] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
-                            foregroundColor: _buttonStates[0] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
+                            backgroundColor: _buttonStates[0] ? Color.fromARGB(255, 255, 255, 255) : Color.fromRGBO(2, 1, 34, 1),
+                            foregroundColor: _buttonStates[0] ? Color.fromRGBO(2, 1, 34, 1) : Color.fromARGB(255, 255, 255, 255),
                             minimumSize: Size(100, 150),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -575,8 +571,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             ],
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _buttonStates[1] ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 10, 38, 39),
-                            foregroundColor: _buttonStates[1] ? Color.fromARGB(255, 10, 38, 39) : Color.fromARGB(255, 255, 255, 255),
+                            backgroundColor: _buttonStates[1] ? Color.fromARGB(255, 255, 255, 255) : Color.fromRGBO(2, 1, 34, 1),
+                            foregroundColor: _buttonStates[1] ? Color.fromRGBO(2, 1, 34, 1) : Color.fromARGB(255, 255, 255, 255),
                             minimumSize: Size(128, 150),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -634,7 +630,7 @@ class AppDrawer extends StatelessWidget {
           SizedBox(height: 100),
           ListTile(
             contentPadding: EdgeInsets.only(left: 50),
-            title: Text('Emergency Alerts', style: TextStyle(fontSize: 20, color: Color.fromRGBO(255, 255, 255, 1), fontWeight: FontWeight.w500)),
+            title: Text('Emergency Alerts', style: TextStyle(fontSize: 20, color: Color.fromRGBO(248, 51, 60, 1), fontWeight: FontWeight.w800)),
             onTap: () {
               if (isAuthenticated) {
                 _fetchPhoneNumber().then((phoneNumber) {

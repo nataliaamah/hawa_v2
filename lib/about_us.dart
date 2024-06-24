@@ -5,14 +5,14 @@ class AboutUsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 10, 38, 39),
+      backgroundColor: const Color.fromRGBO(2, 1, 34, 1),
       body: CustomScrollView(
         slivers: <Widget>[
           SliverAppBar(
             expandedHeight: 80.0,
             floating: false,
             pinned: true,
-            backgroundColor: Color.fromARGB(255, 10, 38, 39),
+            backgroundColor: const Color.fromRGBO(2, 1, 34, 1),
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: EdgeInsets.only(left: 150, bottom: 20),
               title: Text(

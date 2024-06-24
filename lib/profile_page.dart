@@ -59,9 +59,9 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 10, 38, 39),
+      backgroundColor: const Color.fromRGBO(2, 1, 34, 1),
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(255, 10, 38, 39),
+        backgroundColor: Color.fromRGBO(2, 1, 34, 1),
         elevation: 0,
         automaticallyImplyLeading: false,
         centerTitle: true,
@@ -93,7 +93,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Center(
                             child: CircleAvatar(
                               radius: 30,
-                              backgroundColor: Colors.teal[700],
+                              backgroundColor: Color.fromRGBO(226, 192, 68, 1),
                               child: Icon(Icons.person, size: 30, color: Colors.white),
                             ),
                           ),
@@ -126,9 +126,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                 'Edit Profile',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.teal[200],
+                                  color: Color.fromRGBO(226, 192, 68, 1),
                                   decoration: TextDecoration.underline,
-                                  decorationColor: Colors.teal[200],
+                                  decorationColor: Color.fromRGBO(226, 192, 68, 1),
                                 ),
                               ),
                             ),
