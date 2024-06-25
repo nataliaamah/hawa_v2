@@ -46,6 +46,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late StreamSubscription<GyroscopeEvent> _gyroscopeSubscription;
   bool _isAuthenticated = false;
   Completer<void>? _popupCompleter;
+  Timer? _debounceTimer;
 
   static const platform = MethodChannel('com.hawa.application/location');
 
@@ -374,15 +375,25 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _startShakeDetection() {
-  _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent event) {
-    final double shakeThreshold = 5.0; // Increased value to detect larger shakes
-    if (!_emergencyMessageSent && (event.x.abs() > shakeThreshold || event.y.abs() > shakeThreshold || event.z.abs() > shakeThreshold)) {
-      _handleShakeEmergency();
-      _emergencyMessageSent = true;
-    }
-  });
-}
+    _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent event) {
+      final double shakeThreshold = 10.0; // Increased value to detect larger shakes
+      final int debounceTime = 2000; // 2 seconds debounce time
 
+      if (!_emergencyMessageSent &&
+          (event.x.abs() > shakeThreshold ||
+              event.y.abs() > shakeThreshold ||
+              event.z.abs() > shakeThreshold)) {
+        _handleShakeEmergency();
+        _emergencyMessageSent = true;
+
+        // Reset the emergency message flag after the debounce time
+        _debounceTimer?.cancel();
+        _debounceTimer = Timer(Duration(milliseconds: debounceTime), () {
+          _emergencyMessageSent = false;
+        });
+      }
+    });
+  }
 
   void _handleShakeEmergency() async {
     if (!_isAuthenticated) {

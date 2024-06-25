@@ -71,8 +71,8 @@ class ContactEmergencyViewPage extends StatelessWidget {
         centerTitle: true,
         title: Image.asset(
           'assets/images/hawa_name.png',
-          height: 150,
-          width: 150,
+          height: 200,
+          width: 200,
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
@@ -122,15 +122,15 @@ class ContactEmergencyViewPage extends StatelessWidget {
                   if (isShakeEmergency) ...[
                     SizedBox(height: 20),
                     Center(
-                      child: Text(
-                        'A large shake has been detected from $senderName. They may be in danger.',
-                        style: TextStyle(
+                    child: Text(
+                      'A large shake has been detected from $senderName. They may be in danger.',
+                      style: TextStyle(
                           fontSize: 14,
                           color: Colors.white,
                           fontWeight: FontWeight.w400,
                         ),
                         textAlign: TextAlign.center,
-                      ),
+                    ),
                     ),
                   ],
                   if (imageUrls.isNotEmpty) ...[
@@ -236,7 +236,7 @@ class ContactEmergencyViewPage extends StatelessWidget {
                               margin: EdgeInsets.symmetric(horizontal: 5.0),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(16.0),
-                                child: Image.network(imageUrls[index], fit: BoxFit.cover),
+                                child: Image.network(imageUrls[index]),
                               ),
                             ),
                           );

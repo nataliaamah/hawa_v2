@@ -1,12 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hawa_v1/contact_emergency_view.dart';
 import 'package:hawa_v1/home_page.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:async';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:intl/intl.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class ContactEmergencyPage extends StatefulWidget {
   final String phoneNumber;
@@ -39,12 +38,15 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
         .where('emergencyNumber', isEqualTo: _formatPhoneNumber(widget.phoneNumber))
         .snapshots()
         .listen((snapshot) {
-      emergencyDocs = snapshot.docs;
-      emergencyDocs.sort((a, b) {
-        Timestamp aTimestamp = a['timestamp'];
-        Timestamp bTimestamp = b['timestamp'];
-        return bTimestamp.compareTo(aTimestamp);
+      setState(() {
+        emergencyDocs = snapshot.docs;
+        emergencyDocs.sort((a, b) {
+          Timestamp aTimestamp = a['timestamp'];
+          Timestamp bTimestamp = b['timestamp'];
+          return bTimestamp.compareTo(aTimestamp);
+        });
       });
+
       if (emergencyDocs.any((doc) {
         final data = doc.data() as Map<String, dynamic>?;
         return data != null && data['resolved'] == false;
@@ -55,7 +57,6 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
       } else {
         _stopVibrating();
       }
-      setState(() {});
     });
   }
 
@@ -172,9 +173,7 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
               if (data == null) return SizedBox.shrink();
 
               bool isNew = !isResolvedList && _isVibrating;
-              bool isShakeEmergency = data.containsKey('isShakeEmergency') ? data['isShakeEmergency'] : false;
               String userName = data['userName'] ?? 'Unknown User';
-              List<String> imageUrls = List<String>.from(data['imageUrls'] ?? []);
 
               return FutureBuilder<String?>(
                 future: _fetchUserName(data['userId']),
@@ -237,82 +236,12 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              isShakeEmergency ? 'Gyroscope Detection' : 'Picture Emergency',
+                              'Emergency',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.black,
                               ),
                             ),
-                            SizedBox(height: 10),
-                            if (isShakeEmergency) ...[
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8.0),
-                                child: Container(
-                                  height: 150,
-                                  child: GoogleMap(
-                                    initialCameraPosition: CameraPosition(
-                                      target: LatLng(data['location'].latitude, data['location'].longitude),
-                                      zoom: 14.0,
-                                    ),
-                                    markers: {
-                                      Marker(
-                                        markerId: MarkerId('emergencyLocation'),
-                                        position: LatLng(data['location'].latitude, data['location'].longitude),
-                                      ),
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ] else ...[
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      child: Container(
-                                        height: 150,
-                                        child: GoogleMap(
-                                          initialCameraPosition: CameraPosition(
-                                            target: LatLng(data['location'].latitude, data['location'].longitude),
-                                            zoom: 14.0,
-                                          ),
-                                          markers: {
-                                            Marker(
-                                              markerId: MarkerId('emergencyLocation'),
-                                              position: LatLng(data['location'].latitude, data['location'].longitude),
-                                            ),
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  if (imageUrls.isNotEmpty) ...[
-                                    Expanded(
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8.0),
-                                        child: Image.network(
-                                          imageUrls[0],
-                                          fit: BoxFit.cover,
-                                          height: 150,
-                                        ),
-                                      ),
-                                    ),
-                                  ] else ...[
-                                    Expanded(
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8.0),
-                                        child: Container(
-                                          height: 150,
-                                          color: Colors.grey,
-                                          child: Icon(Icons.image, color: Colors.white),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ],
                             SizedBox(height: 10),
                           ],
                         ),
