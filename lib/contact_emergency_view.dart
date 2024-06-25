@@ -4,12 +4,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
-import 'package:hawa_v1/contact_emergency.dart';
-import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:dio/dio.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'dart:typed_data';
+import 'package:intl/intl.dart';
 
 class ContactEmergencyViewPage extends StatelessWidget {
   final DocumentSnapshot emergencyData;
@@ -38,7 +37,7 @@ class ContactEmergencyViewPage extends StatelessWidget {
   }
 
   int _calculateAge(String dateOfBirth) {
-    if (dateOfBirth == null || dateOfBirth.isEmpty) {
+    if (dateOfBirth.isEmpty) {
       return -1; // Invalid age
     }
     final dob = DateFormat('dd/MM/yyyy').parse(dateOfBirth);
@@ -52,12 +51,12 @@ class ContactEmergencyViewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String userId = emergencyData['userId'];
-    final GeoPoint location = emergencyData['location'];
-    final List<String> imageUrls = List<String>.from(emergencyData['imageUrls']);
+    final Map<String, dynamic>? data = emergencyData.data() as Map<String, dynamic>?;
+    final String userId = data?['userId'] ?? ''; // Ensure userId field exists
+    final GeoPoint location = data?['location'] ?? GeoPoint(0, 0);
+    final List<String> imageUrls = List<String>.from(data?['imageUrls'] ?? []);
     final double latitude = location.latitude;
     final double longitude = location.longitude;
-    final Map<String, dynamic>? data = emergencyData.data() as Map<String, dynamic>?;
     final bool isShakeEmergency = data != null && data.containsKey('isShakeEmergency')
         ? data['isShakeEmergency']
         : false;
@@ -87,160 +86,164 @@ class ContactEmergencyViewPage extends StatelessWidget {
           ),
         ],
       ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _fetchUserDetails(userId),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
-          }
+      body: userId.isEmpty
+          ? Center(child: Text('Invalid User ID', style: TextStyle(color: Colors.white)))
+          : FutureBuilder<Map<String, dynamic>>(
+              future: _fetchUserDetails(userId),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
 
-          final userDetails = snapshot.data!;
-          final String senderName = userDetails['fullName'] ?? '-';
-          final String age = userDetails['dateOfBirth'] != null ? _calculateAge(userDetails['dateOfBirth']).toString() : '-';
-          final String bloodType = userDetails['bloodType'] ?? '-';
-          final String phoneNumber = userDetails['phoneNumber'] ?? '-';
-          final String medication = userDetails['medication'] ?? '-';
-          final String allergies = userDetails['allergies'] ?? '-';
+                final userDetails = snapshot.data!;
+                final String senderName = userDetails['fullName'] ?? '-';
+                final String age = userDetails['dateOfBirth'] != null
+                    ? _calculateAge(userDetails['dateOfBirth']).toString()
+                    : '-';
+                final String bloodType = userDetails['bloodType'] ?? '-';
+                final String phoneNumber = userDetails['phoneNumber'] ?? '-';
+                final String medication = userDetails['medication'] ?? '-';
+                final String allergies = userDetails['allergies'] ?? '-';
 
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Text(
-                      '$senderName\'s Emergency',
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  if (isShakeEmergency) ...[
-                    SizedBox(height: 20),
-                    Center(
-                    child: Text(
-                      'A large shake has been detected from $senderName. They may be in danger.',
-                      style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        textAlign: TextAlign.center,
-                    ),
-                    ),
-                  ],
-                  if (imageUrls.isNotEmpty) ...[
-                    SizedBox(height: 20),
-                    Center(
-                      child: Text(
-                        '$senderName shared pictures of their surroundings and their location. They may be in danger.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ],
-                  SizedBox(height: 20),
-                  SizedBox(height: 10),
-                  Container(
-                    padding: EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16.0),
-                    ),
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildUserInfoRow('Full Name', senderName),
-                        _buildUserInfoRow('Age', age),
-                        _buildUserInfoRow('Phone Number', phoneNumber),
-                        _buildUserInfoRow('Blood Type', bloodType),
-                        _buildUserInfoRow('Medication', medication),
-                        _buildUserInfoRow('Allergies', allergies),
+                        Center(
+                          child: Text(
+                            '$senderName\'s Emergency',
+                            style: TextStyle(
+                              fontSize: 24,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        if (isShakeEmergency) ...[
+                          SizedBox(height: 20),
+                          Center(
+                            child: Text(
+                              'A large shake has been detected from $senderName. They may be in danger.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w400,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                        if (imageUrls.isNotEmpty) ...[
+                          SizedBox(height: 20),
+                          Center(
+                            child: Text(
+                              '$senderName shared pictures of their surroundings and their location. They may be in danger.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w400,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                        SizedBox(height: 20),
+                        SizedBox(height: 10),
+                        Container(
+                          padding: EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16.0),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildUserInfoRow('Full Name', senderName),
+                              _buildUserInfoRow('Age', age),
+                              _buildUserInfoRow('Phone Number', phoneNumber),
+                              _buildUserInfoRow('Blood Type', bloodType),
+                              _buildUserInfoRow('Medication', medication),
+                              _buildUserInfoRow('Allergies', allergies),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          'Shared Location',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Color.fromRGBO(226, 192, 68, 1),
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.left,
+                        ),
+                        SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(16.0),
+                          child: Container(
+                            height: 200,
+                            child: GoogleMap(
+                              initialCameraPosition: CameraPosition(
+                                target: LatLng(latitude, longitude),
+                                zoom: 14.0,
+                              ),
+                              markers: {
+                                Marker(
+                                  markerId: MarkerId('emergencyLocation'),
+                                  position: LatLng(latitude, longitude),
+                                ),
+                              },
+                              onTap: (_) => _openInGoogleMaps(latitude, longitude),
+                            ),
+                          ),
+                        ),
+                        if (imageUrls.isNotEmpty) ...[
+                          SizedBox(height: 20),
+                          Text(
+                            'Shared Pictures',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Color.fromRGBO(226, 192, 68, 1),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Container(
+                            height: 200,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: imageUrls.length,
+                              itemBuilder: (context, index) {
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ImageGalleryPage(imageUrls: imageUrls, initialIndex: index),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    margin: EdgeInsets.symmetric(horizontal: 5.0),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      child: Image.network(imageUrls[index]),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                  SizedBox(height: 20),
-                  Text(
-                    'Shared Location',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Color.fromRGBO(226, 192, 68, 1),
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                  SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16.0),
-                    child: Container(
-                      height: 200,
-                      child: GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(latitude, longitude),
-                          zoom: 14.0,
-                        ),
-                        markers: {
-                          Marker(
-                            markerId: MarkerId('emergencyLocation'),
-                            position: LatLng(latitude, longitude),
-                          ),
-                        },
-                        onTap: (_) => _openInGoogleMaps(latitude, longitude),
-                      ),
-                    ),
-                  ),
-                  if (imageUrls.isNotEmpty) ...[
-                    SizedBox(height: 20),
-                    Text(
-                      'Shared Pictures',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Color.fromRGBO(226, 192, 68, 1),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Container(
-                      height: 200,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: imageUrls.length,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ImageGalleryPage(imageUrls: imageUrls, initialIndex: index),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              margin: EdgeInsets.symmetric(horizontal: 5.0),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16.0),
-                                child: Image.network(imageUrls[index]),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 

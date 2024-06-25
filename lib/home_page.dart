@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math'; // Ensure this import is included for the sqrt function
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:hawa_v1/login_page.dart';
 import 'package:hawa_v1/profile_page.dart';
@@ -21,8 +21,9 @@ import 'package:telephony/telephony.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:location/location.dart';
+import 'package:hawa_v1/contact_emergency.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
-import 'contact_emergency_view.dart' as contactView;
+import 'package:hawa_v1/contact_emergency_view.dart' as contactView;
 
 class HomePage extends StatefulWidget {
   final String fullName;
@@ -53,6 +54,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   int _snappedPictures = 0;
   int maxPictures = 5;
   String? _currentEmergencyId;
+  DateTime? _lastAlertTime;
+  bool _canSendAlert = true;
+  bool _isProcessingAlert = false;
 
   static const platform = MethodChannel('com.hawa.application/location');
 
@@ -105,7 +109,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (documentSnapshot.exists) {
         logger.d('Document exists for user ID: ${widget.userId}');
         var contactNumber = documentSnapshot['contactNumber'];
-        if (contactNumber != null && contactNumber is String && contactNumber.isNotEmpty) {
+        if (contactNumber != null && contactNumber is String && (contactNumber.isNotEmpty)) {
           setState(() {
             _emergencyNumber = contactNumber.startsWith('+') ? contactNumber : '+$contactNumber';
           });
@@ -368,7 +372,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       'location': GeoPoint(_locationData.latitude!, _locationData.longitude!),
       'timestamp': FieldValue.serverTimestamp(),
       'resolved': false,
-      'isShakeEmergency': true, // Set this to true for shake emergencies
+      'isShakeEmergency': true, // Set isShakeEmergency to true
     });
 
     logger.d('Emergency alert initialized with ID: ${docRef.id}');
@@ -402,35 +406,65 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void _startShakeDetection() {
     _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent event) {
       final double shakeThreshold = 10.0; // Increased value to detect larger shakes
-      final int debounceTime = 2000; // 2 seconds debounce time
+      final angularVelocity = sqrt(event.x * event.x + event.y * event.y + event.z * event.z); // Calculate the angular velocity magnitude
 
-      final angularVelocity =
-          sqrt(event.x * event.x + event.y * event.y + event.z * event.z); // Calculate the angular velocity magnitude
-
-      if (!_emergencyMessageSent && angularVelocity > shakeThreshold) {
+      if (!_isProcessingAlert && !_isSnapping && angularVelocity > shakeThreshold) {
+        _isProcessingAlert = true;
         _handleShakeEmergency();
-        _emergencyMessageSent = true;
-
-        // Reset the emergency message flag after the debounce time
-        _debounceTimer?.cancel();
-        _debounceTimer = Timer(Duration(milliseconds: debounceTime), () {
-          _emergencyMessageSent = false;
-        });
 
         Vibrate.feedback(FeedbackType.warning); // Haptic feedback on shake detection
         _showShakeDetectionAlert(); // Show alert popup
+
+        _disableGyroscopeFor10Seconds(); // Disable gyroscope for 5 seconds after detecting shake
       }
     });
   }
 
-  void _handleShakeEmergency() async {
-    if (!_isAuthenticated) {
-      await _showLoginRequiredDialog();
-      return;
-    }
+  void _showShakeDetectionAlert() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Shake Detected'),
+          content: Text('Unusual movement detected. Emergency alert sent to contact.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel Alert'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _cancelAlert();
+              },
+            ),
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-    // Save data to Firestore indicating a shake emergency
-    _currentEmergencyId = await _initializeEmergencyAlert();
+  void _disableGyroscopeFor10Seconds() {
+    // Stop listening to the gyroscope events
+    _gyroscopeSubscription.cancel();
+
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(Duration(seconds: 10), () {
+      _isProcessingAlert = false;
+      _startShakeDetection(); 
+    });
+  }
+
+  void _cancelAlert() {
+    _isProcessingAlert = false;
+    _startShakeDetection(); 
+  }
+
+  void _handleShakeEmergency() {
+    print('Shake emergency detected and alert sent.');
   }
 
   void _showSnappingIndicator() {
@@ -468,27 +502,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
-  void _showShakeDetectionAlert() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Shake Detected'),
-          content: Text('A large shake has been detected and an emergency alert has been sent to your emergency contact.'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     String firstName = getFirstName(widget.fullName);
@@ -512,7 +525,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           children: [
             CustomPaint(
               size: Size(MediaQuery.of(context).size.width, 250),
-              painter: HalfCirclePainter( Color.fromRGBO(2, 1, 34, 1)),
+              painter: HalfCirclePainter(Color.fromRGBO(2, 1, 34, 1)),
             ),
             Row(
               children: [
@@ -628,10 +641,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       runSpacing: 15,
                       children: [
                         ElevatedButton(
-                          onPressed: () {
-                            _initiateCall();
-                            Vibrate.feedback(FeedbackType.light); // Haptic feedback on button press
-                          },
+                          onPressed: () => _initiateCall(),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -658,7 +668,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           onPressed: () {
                             _showSnappingIndicator();
                             _takePictures();
-                            Vibrate.feedback(FeedbackType.light); // Haptic feedback on button press
                           },
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -710,9 +719,9 @@ class AppDrawer extends StatelessWidget {
     return null;
   }
 
-  Future<String?> _fetchFullName(String userId) async {
+  Future<DocumentSnapshot?> _fetchFullName(String userId) async {
     DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
-    return userDoc['fullName'];
+    return userDoc.exists ? userDoc : null;
   }
 
   @override
@@ -735,15 +744,40 @@ class AppDrawer extends StatelessWidget {
             title: Text('Emergency Alerts', style: TextStyle(fontSize: 20, color: Color.fromRGBO(248, 51, 60, 1), fontWeight: FontWeight.w800)),
             onTap: () async {
               if (isAuthenticated) {
-                DocumentSnapshot emergencyData = await fetchEmergencyData(userId); // Await the fetched data
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => contactView.ContactEmergencyViewPage(
-                      emergencyData: emergencyData,
+                final phoneNumber = await _fetchPhoneNumber();
+                if (phoneNumber != null) {
+                  final fullName = await _fetchFullName(userId);
+                  if (fullName != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ContactEmergencyPage(
+                          phoneNumber: phoneNumber,
+                          fullName: fullName['fullName'],
+                          userId: userId,
+                          isAuthenticated: isAuthenticated,
+                        ),
+                      ),
+                    ).then((_) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => HomePage(isAuthenticated: isAuthenticated, fullName: fullName['fullName'], userId: userId)),
+                      );
+                    });
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Full name not found'),
+                      ),
+                    );
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Phone number not found'),
                     ),
-                  ),
-                );
+                  );
+                }
               } else {
                 showDialog(
                   context: context,
@@ -832,10 +866,4 @@ class AppDrawer extends StatelessWidget {
       ),
     );
   }
-}
-
-// Placeholder function to fetch emergency data
-Future<DocumentSnapshot> fetchEmergencyData(String userId) async {
-  var emergencyData = await FirebaseFirestore.instance.collection('contact_emergency').doc(userId).get();
-  return emergencyData;
 }
