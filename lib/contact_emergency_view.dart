@@ -148,15 +148,6 @@ class ContactEmergencyViewPage extends StatelessWidget {
                     ),
                   ],
                   SizedBox(height: 20),
-                  Text(
-                    'User Information',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Color.fromRGBO(226, 192, 68, 1),
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
                   SizedBox(height: 10),
                   Container(
                     padding: EdgeInsets.all(16.0),

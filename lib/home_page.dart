@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math'; // Ensure this import is included for the sqrt function
 import 'package:flutter/material.dart';
 import 'package:hawa_v1/login_page.dart';
 import 'package:hawa_v1/profile_page.dart';
@@ -20,7 +21,8 @@ import 'package:telephony/telephony.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:location/location.dart';
-import 'package:hawa_v1/contact_emergency.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'contact_emergency_view.dart' as contactView;
 
 class HomePage extends StatefulWidget {
   final String fullName;
@@ -47,6 +49,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool _isAuthenticated = false;
   Completer<void>? _popupCompleter;
   Timer? _debounceTimer;
+  bool _isSnapping = false;
+  int _snappedPictures = 0;
+  int maxPictures = 5;
+  String? _currentEmergencyId;
 
   static const platform = MethodChannel('com.hawa.application/location');
 
@@ -285,7 +291,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
-  // Function to take 5 successive pictures
+  // Function to take multiple pictures
   Future<void> _takePictures() async {
     if (!_isAuthenticated) {
       bool contactEntered = await _showEnterEmergencyContactDialog();
@@ -297,21 +303,88 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     try {
       await _initializeControllerFuture;
 
-      List<String> imageUrls = [];
-      for (int i = 0; i < 5; i++) {
+      // Initialize the emergency alert entry in Firestore
+      _currentEmergencyId = await _initializeEmergencyAlert();
+
+      _isSnapping = true;
+      _snappedPictures = 0;
+      setState(() {});
+
+      for (int i = 0; i < maxPictures && _isSnapping; i++) {
         final image = await _cameraController!.takePicture();
         final directory = await getApplicationDocumentsDirectory();
         final imagePath = path.join(directory.path, '${DateTime.now()}_$i.png');
         await image.saveTo(imagePath);
         logger.d('Picture saved to $imagePath');
         final imageUrl = await _uploadImageToCloudStorage(imagePath);
-        imageUrls.add(imageUrl);
+        await _updateEmergencyAlert(imageUrl);
         logger.d('Image $i uploaded to $imageUrl');
+
+        // Increase haptic feedback intensity
+        Vibrate.feedback(FeedbackType.success);
+        _snappedPictures++;
+        setState(() {});
+
+        await Future.delayed(Duration(milliseconds: 1000)); // Shorter interval between snaps
       }
 
-      await _saveEmergencyDataToFirestore(imageUrls, false);
+      _isSnapping = false;
+      setState(() {});
     } catch (e) {
       logger.e('Error taking pictures: $e');
+    }
+  }
+
+  // Function to initialize the emergency alert in Firestore
+  Future<String> _initializeEmergencyAlert() async {
+    Location location = new Location();
+
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
+    LocationData _locationData;
+
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        throw Exception('Location service not enabled');
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        throw Exception('Location permission not granted');
+      }
+    }
+
+    _locationData = await location.getLocation();
+
+    DocumentReference docRef = await FirebaseFirestore.instance.collection('contact_emergency').add({
+      'userId': widget.userId,
+      'emergencyNumber': _emergencyNumber,
+      'imageUrls': [],
+      'location': GeoPoint(_locationData.latitude!, _locationData.longitude!),
+      'timestamp': FieldValue.serverTimestamp(),
+      'resolved': false,
+      'isShakeEmergency': true, // Set this to true for shake emergencies
+    });
+
+    logger.d('Emergency alert initialized with ID: ${docRef.id}');
+    return docRef.id;
+  }
+
+  // Function to update the emergency alert with new image URL
+  Future<void> _updateEmergencyAlert(String imageUrl) async {
+    if (_currentEmergencyId != null) {
+      await FirebaseFirestore.instance.collection('contact_emergency').doc(_currentEmergencyId).update({
+        'imageUrls': FieldValue.arrayUnion([imageUrl]),
+      });
+
+      logger.d('Emergency alert updated with new image URL: $imageUrl');
+    } else {
+      logger.e('No current emergency ID found to update');
     }
   }
 
@@ -326,63 +399,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return returnURL;
   }
 
-  // Function to save data to Firestore
-  Future<void> _saveEmergencyDataToFirestore([List<String> imageUrls = const [], bool isShakeEmergency = false]) async {
-    Location location = new Location();
-
-    bool _serviceEnabled;
-    PermissionStatus _permissionGranted;
-    LocationData _locationData;
-
-    _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
-        return;
-      }
-    }
-
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
-        return;
-      }
-    }
-
-    _locationData = await location.getLocation();
-
-    await FirebaseFirestore.instance.collection('contact_emergency').add({
-      'userId': widget.userId,
-      'emergencyNumber': _emergencyNumber,
-      'imageUrls': imageUrls,
-      'location': GeoPoint(_locationData.latitude!, _locationData.longitude!),
-      'timestamp': FieldValue.serverTimestamp(),
-      'resolved': false,
-      'isShakeEmergency': isShakeEmergency,
-    });
-
-    logger.d('Data saved to Firestore successfully.');
-  }
-
-  Future<void> _callEmergencyNumber() async {
-    final Uri emergencyUri = Uri(scheme: 'tel', path: '999');
-    if (await canLaunchUrl(emergencyUri)) {
-      await launchUrl(emergencyUri);
-    } else {
-      logger.e('Could not launch $emergencyUri');
-    }
-  }
-
   void _startShakeDetection() {
     _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent event) {
       final double shakeThreshold = 10.0; // Increased value to detect larger shakes
       final int debounceTime = 2000; // 2 seconds debounce time
 
-      if (!_emergencyMessageSent &&
-          (event.x.abs() > shakeThreshold ||
-              event.y.abs() > shakeThreshold ||
-              event.z.abs() > shakeThreshold)) {
+      final angularVelocity =
+          sqrt(event.x * event.x + event.y * event.y + event.z * event.z); // Calculate the angular velocity magnitude
+
+      if (!_emergencyMessageSent && angularVelocity > shakeThreshold) {
         _handleShakeEmergency();
         _emergencyMessageSent = true;
 
@@ -391,6 +416,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         _debounceTimer = Timer(Duration(milliseconds: debounceTime), () {
           _emergencyMessageSent = false;
         });
+
+        Vibrate.feedback(FeedbackType.warning); // Haptic feedback on shake detection
+        _showShakeDetectionAlert(); // Show alert popup
       }
     });
   }
@@ -402,7 +430,63 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
 
     // Save data to Firestore indicating a shake emergency
-    await _saveEmergencyDataToFirestore([], true);
+    _currentEmergencyId = await _initializeEmergencyAlert();
+  }
+
+  void _showSnappingIndicator() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.black87,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Snapping pictures... $_snappedPictures/$maxPictures',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _isSnapping = false;
+                      });
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('Stop Snapping'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showShakeDetectionAlert() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Shake Detected'),
+          content: Text('A large shake has been detected and an emergency alert has been sent to your emergency contact.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -544,7 +628,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       runSpacing: 15,
                       children: [
                         ElevatedButton(
-                          onPressed: () => _initiateCall(),
+                          onPressed: () {
+                            _initiateCall();
+                            Vibrate.feedback(FeedbackType.light); // Haptic feedback on button press
+                          },
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -568,7 +655,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           ),
                         ),
                         ElevatedButton(
-                          onPressed: () => _takePictures(),
+                          onPressed: () {
+                            _showSnappingIndicator();
+                            _takePictures();
+                            Vibrate.feedback(FeedbackType.light); // Haptic feedback on button press
+                          },
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -642,44 +733,17 @@ class AppDrawer extends StatelessWidget {
           ListTile(
             contentPadding: EdgeInsets.only(left: 50),
             title: Text('Emergency Alerts', style: TextStyle(fontSize: 20, color: Color.fromRGBO(248, 51, 60, 1), fontWeight: FontWeight.w800)),
-            onTap: () {
+            onTap: () async {
               if (isAuthenticated) {
-                _fetchPhoneNumber().then((phoneNumber) {
-                  if (phoneNumber != null) {
-                    _fetchFullName(userId).then((fullName) {
-                      if (fullName != null) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ContactEmergencyPage(
-                              phoneNumber: phoneNumber,
-                              fullName: fullName,
-                              userId: userId,
-                              isAuthenticated: isAuthenticated,
-                            ),
-                          ),
-                        ).then((_) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => HomePage(isAuthenticated: isAuthenticated, fullName: fullName, userId: userId)),
-                          );
-                        });
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Full name not found'),
-                          ),
-                        );
-                      }
-                    });
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Phone number not found'),
-                      ),
-                    );
-                  }
-                });
+                DocumentSnapshot emergencyData = await fetchEmergencyData(userId); // Await the fetched data
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => contactView.ContactEmergencyViewPage(
+                      emergencyData: emergencyData,
+                    ),
+                  ),
+                );
               } else {
                 showDialog(
                   context: context,
@@ -768,4 +832,10 @@ class AppDrawer extends StatelessWidget {
       ),
     );
   }
+}
+
+// Placeholder function to fetch emergency data
+Future<DocumentSnapshot> fetchEmergencyData(String userId) async {
+  var emergencyData = await FirebaseFirestore.instance.collection('contact_emergency').doc(userId).get();
+  return emergencyData;
 }
