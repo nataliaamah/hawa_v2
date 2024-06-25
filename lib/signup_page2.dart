@@ -120,7 +120,7 @@ class _SignUp2State extends State<SignUp2> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 10, 38, 39),
+        backgroundColor: const Color.fromRGBO(2, 1, 34, 1),
         body: SingleChildScrollView(
           child: Container(
             width: double.maxFinite,
@@ -202,7 +202,7 @@ class _SignUp2State extends State<SignUp2> {
                         child: ElevatedButton(
                           onPressed: () => _submitForm(context),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF9CE1CF),
+                            backgroundColor: Color.fromRGBO(226, 192, 68, 1),
                             foregroundColor: const Color.fromARGB(255, 0, 0, 0),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
@@ -260,10 +260,10 @@ class _SignUp2State extends State<SignUp2> {
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  fillColor: Color.fromARGB(255, 87, 89, 127),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 87, 89, 127)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -322,10 +322,10 @@ class _SignUp2State extends State<SignUp2> {
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  fillColor: Color.fromARGB(255, 87, 89, 127),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 87, 89, 127)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -385,10 +385,10 @@ class _SignUp2State extends State<SignUp2> {
                 value: _relationship,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  fillColor: Color.fromARGB(255, 87, 89, 127),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 87, 89, 127)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),

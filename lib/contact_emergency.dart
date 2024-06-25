@@ -5,6 +5,8 @@ import 'package:hawa_v1/home_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:intl/intl.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class ContactEmergencyPage extends StatefulWidget {
   final String phoneNumber;
@@ -110,9 +112,9 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
     final date = timestamp.toDate();
     final now = DateTime.now();
     if (date.year != now.year) {
-      return '${date.day}/${date.month}/${date.year}';
+      return DateFormat('d/MM/yyyy').format(date);
     }
-    return '${date.day}/${date.month}';
+    return DateFormat('d/MM').format(date);
   }
 
   String _formatTime(Timestamp? timestamp) {
@@ -120,110 +122,209 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
       return 'Unknown Time';
     }
     final date = timestamp.toDate();
-    return '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    return DateFormat('h:mm a').format(date);
   }
 
   Widget _buildEmergencyList(List<DocumentSnapshot> docs, bool isResolvedList) {
-    final filteredDocs = docs.where((doc) {
-      final data = doc.data() as Map<String, dynamic>?;
-      return data != null && data['resolved'] == isResolvedList;
-    }).toList();
+    final groupedDocs = <String, List<DocumentSnapshot>>{};
 
-    if (filteredDocs.isEmpty && !isResolvedList) {
+    for (var doc in docs) {
+      final data = doc.data() as Map<String, dynamic>?;
+      if (data == null) continue;
+
+      bool isResolved = data['resolved'] ?? true;
+      if (isResolved != isResolvedList) continue;
+
+      String dateKey = _formatTimestamp(data['timestamp']);
+      if (!groupedDocs.containsKey(dateKey)) {
+        groupedDocs[dateKey] = [];
+      }
+      groupedDocs[dateKey]!.add(doc);
+    }
+
+    if (groupedDocs.isEmpty && !isResolvedList) {
       return Center(
         child: Text(
           'No new emergencies',
-          style: TextStyle(color: Colors.white, fontSize: 18),
+          style: TextStyle(color: Colors.white, fontSize: 15),
         ),
       );
     }
 
-    return ListView.builder(
+    return ListView(
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      itemCount: filteredDocs.length,
-      itemBuilder: (context, index) {
-        DocumentSnapshot emergencyData = filteredDocs[index];
-        final data = emergencyData.data() as Map<String, dynamic>?;
-        if (data == null) {
-          return SizedBox.shrink(); // Handle null data case
-        }
-
-        bool isResolved = data['resolved'] ?? true;
-        bool isNew = !isResolved && _isVibrating;
-
-        return FutureBuilder<String?>(
-          future: _fetchUserName(data['userId']),
-          builder: (context, snapshot) {
-            String userName = snapshot.data ?? 'Unknown User';
-            return GestureDetector(
-              onTap: () {
-                if (isNew) {
-                  _stopVibrating();
-                }
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ContactEmergencyViewPage(emergencyData: emergencyData),
-                  ),
-                );
-              },
-              child: Stack(
-                alignment: Alignment.topCenter,
-                children: [
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 25.0, horizontal: 16.0),  // Increased the top margin
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isResolved ? Colors.transparent : Color.fromRGBO(248, 51, 60, 0.6),
-                          spreadRadius: 10,
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: ListTile(
-                      title: Text(
-                        '$userName Needs Help!',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Emergency at ${_formatTime(data['timestamp'])}',
-                        style: TextStyle(
-                          color: Colors.black,
-                        ),
-                      ),
-                      trailing: Icon(
-                        isResolved ? Icons.check_circle : Icons.warning,
-                        color: isResolved ? Colors.green : Colors.red,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 0,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
-                      decoration: BoxDecoration(
-                        color: Colors.teal,
-                        borderRadius: BorderRadius.circular(16.0),
-                      ),
-                      child: Text(
-                        _formatTimestamp(data['timestamp']),
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ],
+      children: groupedDocs.entries.map((entry) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: Text(
+                  entry.key,
+                  style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w400),
+                ),
               ),
-            );
-          },
+            ),
+            ...entry.value.map((emergencyData) {
+              final data = emergencyData.data() as Map<String, dynamic>?;
+              if (data == null) return SizedBox.shrink();
+
+              bool isNew = !isResolvedList && _isVibrating;
+              bool isShakeEmergency = data.containsKey('isShakeEmergency') ? data['isShakeEmergency'] : false;
+              String userName = data['userName'] ?? 'Unknown User';
+              List<String> imageUrls = List<String>.from(data['imageUrls'] ?? []);
+
+              return FutureBuilder<String?>(
+                future: _fetchUserName(data['userId']),
+                builder: (context, snapshot) {
+                  userName = snapshot.data ?? 'Unknown User';
+                  return GestureDetector(
+                    onTap: () {
+                      if (isNew) {
+                        _stopVibrating();
+                      }
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ContactEmergencyViewPage(emergencyData: emergencyData),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isResolvedList ? Colors.transparent : Color.fromRGBO(248, 51, 60, 0.6),
+                            spreadRadius: 10,
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  _formatTime(data['timestamp']),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                Icon(
+                                  isResolvedList ? Icons.check_circle : Icons.warning,
+                                  color: isResolvedList ? Colors.green : Colors.red,
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              userName,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              isShakeEmergency ? 'Gyroscope Detection' : 'Picture Emergency',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black,
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            if (isShakeEmergency) ...[
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8.0),
+                                child: Container(
+                                  height: 150,
+                                  child: GoogleMap(
+                                    initialCameraPosition: CameraPosition(
+                                      target: LatLng(data['location'].latitude, data['location'].longitude),
+                                      zoom: 14.0,
+                                    ),
+                                    markers: {
+                                      Marker(
+                                        markerId: MarkerId('emergencyLocation'),
+                                        position: LatLng(data['location'].latitude, data['location'].longitude),
+                                      ),
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ] else ...[
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Container(
+                                        height: 150,
+                                        child: GoogleMap(
+                                          initialCameraPosition: CameraPosition(
+                                            target: LatLng(data['location'].latitude, data['location'].longitude),
+                                            zoom: 14.0,
+                                          ),
+                                          markers: {
+                                            Marker(
+                                              markerId: MarkerId('emergencyLocation'),
+                                              position: LatLng(data['location'].latitude, data['location'].longitude),
+                                            ),
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 10),
+                                  if (imageUrls.isNotEmpty) ...[
+                                    Expanded(
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8.0),
+                                        child: Image.network(
+                                          imageUrls[0],
+                                          fit: BoxFit.cover,
+                                          height: 150,
+                                        ),
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    Expanded(
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8.0),
+                                        child: Container(
+                                          height: 150,
+                                          color: Colors.grey,
+                                          child: Icon(Icons.image, color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
+                            SizedBox(height: 10),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            }).toList(),
+          ],
         );
-      },
+      }).toList(),
     );
   }
 
@@ -261,7 +362,6 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 20),
             Center(
               child: Text(
                 'Emergency Alerts',
@@ -270,23 +370,7 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
                 ),
               ),
             ),
-            Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                child: Text(
-                  "Emergencies from people who set you as emergency contact will show here",
-                  style: GoogleFonts.quicksand(
-                    textStyle: TextStyle(
-                      fontSize: 15,
-                      color: const Color.fromARGB(255, 255, 255, 255),
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-            SizedBox(height: 30),
+            SizedBox(height: 20),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Text(
@@ -294,7 +378,7 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
                 style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            SizedBox(height: 10,),
+            SizedBox(height: 10),
             emergencyDocs.isEmpty
                 ? Center(
                     child: Text(
@@ -303,7 +387,7 @@ class _ContactEmergencyPageState extends State<ContactEmergencyPage> {
                     ),
                   )
                 : _buildEmergencyList(emergencyDocs, false),
-            SizedBox(height: 30,),
+            SizedBox(height: 20),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Text(

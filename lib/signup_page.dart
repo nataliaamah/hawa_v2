@@ -75,7 +75,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 10, 38, 39),
+        backgroundColor: const Color.fromRGBO(2, 1, 34, 1),
         body: SingleChildScrollView(
           child: Container(
             width: double.maxFinite,
@@ -160,7 +160,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         child: ElevatedButton(
                           onPressed: () => signUp(),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF9CE1CF),
+                            backgroundColor: Color.fromRGBO(226, 192, 68, 1),
                             foregroundColor: const Color.fromARGB(255, 0, 0, 0),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
@@ -215,10 +215,10 @@ class _SignUpPageState extends State<SignUpPage> {
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  fillColor: Color.fromARGB(255, 87, 89, 127),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 87, 89, 127)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -278,10 +278,10 @@ class _SignUpPageState extends State<SignUpPage> {
                     controller: dateOfBirthController,
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Color.fromARGB(255, 52, 81, 82),
+                      fillColor: Color.fromARGB(255, 87, 89, 127),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                        borderSide: BorderSide(color: Color.fromARGB(255, 87, 89, 127)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -294,7 +294,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         fontFamily: 'Roboto',
                         fontWeight: FontWeight.w300,
                       ),
-                      suffixIcon: Icon(Icons.calendar_today, color: Color(0xFF9CE1CF)),
+                      suffixIcon: Icon(Icons.calendar_today, color: Color.fromRGBO(226, 192, 68, 1)),
                     ),
                     style: TextStyle(color: Colors.white),
                     validator: (value) {
@@ -354,10 +354,10 @@ class _SignUpPageState extends State<SignUpPage> {
               child: DropdownButtonFormField<String>(
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  fillColor: Color.fromARGB(255, 87, 89, 127),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 87, 89, 127)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -374,7 +374,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     fontWeight: FontWeight.w300,
                   ),
                 ),
-                iconEnabledColor: Color(0xFF9CE1CF),
+                iconEnabledColor: Color.fromRGBO(226, 192, 68, 1),
                 iconDisabledColor: Colors.grey,
                 style: TextStyle(color: Colors.black),
                 selectedItemBuilder: (BuildContext context) {
@@ -447,10 +447,10 @@ class _SignUpPageState extends State<SignUpPage> {
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  fillColor: Color.fromARGB(255, 87, 89, 127),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 87, 89, 127)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -516,10 +516,10 @@ class _SignUpPageState extends State<SignUpPage> {
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  fillColor: Color.fromARGB(255, 87, 89, 127),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 87, 89, 127)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -571,10 +571,10 @@ class _SignUpPageState extends State<SignUpPage> {
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Color.fromARGB(255, 52, 81, 82),
+                  fillColor: Color.fromARGB(255, 87, 89, 127),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 87, 89, 127)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.0),

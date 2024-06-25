@@ -211,7 +211,7 @@ class _LoginPageState extends State<LoginPage> with StateMixin {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 10, 38, 39),
+        backgroundColor: const Color.fromRGBO(2, 1, 34, 1),
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
           leading: IconButton(
@@ -422,7 +422,7 @@ class _LoginPageState extends State<LoginPage> with StateMixin {
         SizedBox(height: 10.0),
         _buildTextFormField(
           controller: emailController,
-          prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF9CE1CF)),
+          prefixIcon: Icon(Icons.email_outlined, color: Color.fromRGBO(226, 192, 68, 1)),
           hintText: "Enter email",
           obscureText: false,
         ),
@@ -441,7 +441,7 @@ class _LoginPageState extends State<LoginPage> with StateMixin {
         SizedBox(height: 10.0),
         _buildTextFormField(
           controller: passwordController,
-          prefixIcon: Icon(Icons.password_outlined, color: Color(0xFF9CE1CF)),
+          prefixIcon: Icon(Icons.password_outlined, color: Color.fromRGBO(226, 192, 68, 1)),
           hintText: "Enter password",
           obscureText: true,
         ),
@@ -466,10 +466,10 @@ class _LoginPageState extends State<LoginPage> with StateMixin {
           hintText: hintText,
           hintStyle: TextStyle(color: Color.fromRGBO(195, 195, 195, 1), fontFamily: 'Roboto', fontWeight: FontWeight.w300),
           filled: true,
-          fillColor: Color.fromARGB(255, 52, 81, 82),
+          fillColor: Color.fromARGB(255, 87, 89, 127),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+            borderSide: BorderSide(color: Color.fromARGB(255, 87, 89, 127)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),

@@ -83,7 +83,7 @@ class _SignUp3State extends State<SignUp3> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 10, 38, 39),
+        backgroundColor: const Color.fromRGBO(2, 1, 34, 1),
         body: SingleChildScrollView(
           child: Container(
             width: double.maxFinite,
@@ -173,7 +173,7 @@ class _SignUp3State extends State<SignUp3> {
                         child: ElevatedButton(
                           onPressed: _registerUser,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF9CE1CF),
+                            backgroundColor: Color.fromRGBO(226, 192, 68, 1),
                             foregroundColor: const Color.fromARGB(255, 0, 0, 0),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
@@ -218,7 +218,7 @@ class _SignUp3State extends State<SignUp3> {
           padding: EdgeInsets.symmetric(horizontal: 10), // Add padding to narrow the width
           child: _buildTextFormField(
             controller: emailController,
-            prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF9CE1CF)),
+            prefixIcon: Icon(Icons.email_outlined, color: Color.fromRGBO(226, 192, 68, 1)),
             hintText: "Enter email",
             obscureText: false,
           ),
@@ -243,7 +243,7 @@ class _SignUp3State extends State<SignUp3> {
           padding: EdgeInsets.symmetric(horizontal: 10), // Add padding to narrow the width
           child: _buildTextFormField(
             controller: passwordController,
-            prefixIcon: Icon(Icons.password_outlined, color: Color(0xFF9CE1CF)),
+            prefixIcon: Icon(Icons.password_outlined, color: Color.fromRGBO(226, 192, 68, 1)),
             hintText: "Enter password",
             obscureText: true,
           ),
@@ -268,7 +268,7 @@ class _SignUp3State extends State<SignUp3> {
           padding: EdgeInsets.symmetric(horizontal: 10), // Add padding to narrow the width
           child: _buildTextFormField(
             controller: confirmPasswordController,
-            prefixIcon: Icon(Icons.password_outlined, color: Color(0xFF9CE1CF)),
+            prefixIcon: Icon(Icons.password_outlined, color: Color.fromRGBO(226, 192, 68, 1)),
             hintText: "Confirm password",
             obscureText: true,
           ),
@@ -298,10 +298,10 @@ class _SignUp3State extends State<SignUp3> {
             fontWeight: FontWeight.w300,
           ),
           filled: true,
-          fillColor: Color.fromARGB(255, 52, 81, 82),
+          fillColor: Color.fromARGB(255, 87, 89, 127),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(color: Color.fromARGB(255, 52, 81, 82)),
+            borderSide: BorderSide(color: Color.fromARGB(255, 87, 89, 127)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),

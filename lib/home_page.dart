@@ -494,7 +494,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     ),
                   ),
                 ),
-                SizedBox(height: 50),
+                SizedBox(height: 60),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -527,7 +527,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           ),
                         ),
                       ),
-                    SizedBox(height: 60),
+                    SizedBox(height: 40),
                     Wrap(
                       spacing: 15,
                       runSpacing: 15,
@@ -547,12 +547,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             ],
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _buttonStates[0] ? Color.fromARGB(255, 255, 255, 255) : Color.fromRGBO(2, 1, 34, 1),
-                            foregroundColor: _buttonStates[0] ? Color.fromRGBO(2, 1, 34, 1) : Color.fromARGB(255, 255, 255, 255),
+                            backgroundColor: _buttonStates[0] ? Color.fromRGBO(197, 197, 197, 1) : Color.fromRGBO(2, 1, 34, 1),
+                            foregroundColor: _buttonStates[0] ? Color.fromRGBO(2, 1, 34, 1) : Color.fromRGBO(197, 197, 197, 1),
                             minimumSize: Size(100, 150),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(color: Color.fromRGBO(197, 197, 197, 1)),
                             ),
                           ),
                         ),
@@ -571,12 +571,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             ],
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _buttonStates[1] ? Color.fromARGB(255, 255, 255, 255) : Color.fromRGBO(2, 1, 34, 1),
-                            foregroundColor: _buttonStates[1] ? Color.fromRGBO(2, 1, 34, 1) : Color.fromARGB(255, 255, 255, 255),
+                            backgroundColor: _buttonStates[1] ? Color.fromRGBO(197, 197, 197, 1) : Color.fromRGBO(2, 1, 34, 1),
+                            foregroundColor: _buttonStates[1] ? Color.fromRGBO(2, 1, 34, 1) : Color.fromRGBO(197, 197, 197, 1),
                             minimumSize: Size(128, 150),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              side: BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(color: Color.fromRGBO(197, 197, 197, 1)),
                             ),
                           ),
                         ),

@@ -5,6 +5,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:hawa_v1/contact_emergency.dart';
+import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:dio/dio.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'dart:typed_data';
 
 class ContactEmergencyViewPage extends StatelessWidget {
   final DocumentSnapshot emergencyData;
@@ -27,9 +32,22 @@ class ContactEmergencyViewPage extends StatelessWidget {
     Navigator.pop(context);
   }
 
-  Future<String?> _fetchUserName(String userId) async {
+  Future<Map<String, dynamic>> _fetchUserDetails(String userId) async {
     DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
-    return userDoc.exists ? userDoc['fullName'] : 'Unknown User';
+    return userDoc.exists ? userDoc.data() as Map<String, dynamic> : {};
+  }
+
+  int _calculateAge(String dateOfBirth) {
+    if (dateOfBirth == null || dateOfBirth.isEmpty) {
+      return -1; // Invalid age
+    }
+    final dob = DateFormat('dd/MM/yyyy').parse(dateOfBirth);
+    final now = DateTime.now();
+    int age = now.year - dob.year;
+    if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age;
   }
 
   @override
@@ -53,8 +71,8 @@ class ContactEmergencyViewPage extends StatelessWidget {
         centerTitle: true,
         title: Image.asset(
           'assets/images/hawa_name.png',
-          height: 200,
-          width: 200,
+          height: 150,
+          width: 150,
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
@@ -69,10 +87,21 @@ class ContactEmergencyViewPage extends StatelessWidget {
           ),
         ],
       ),
-      body: FutureBuilder<String?>(
-        future: _fetchUserName(userId),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _fetchUserDetails(userId),
         builder: (context, snapshot) {
-          String senderName = snapshot.data ?? 'Unknown User';
+          if (!snapshot.hasData) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          final userDetails = snapshot.data!;
+          final String senderName = userDetails['fullName'] ?? '-';
+          final String age = userDetails['dateOfBirth'] != null ? _calculateAge(userDetails['dateOfBirth']).toString() : '-';
+          final String bloodType = userDetails['bloodType'] ?? '-';
+          final String phoneNumber = userDetails['phoneNumber'] ?? '-';
+          final String medication = userDetails['medication'] ?? '-';
+          final String allergies = userDetails['allergies'] ?? '-';
+
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: SingleChildScrollView(
@@ -80,24 +109,27 @@ class ContactEmergencyViewPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
-                  child: Text(
-                    '$senderName\'s Emergency',
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    child: Text(
+                      '$senderName\'s Emergency',
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
                   ),
                   if (isShakeEmergency) ...[
                     SizedBox(height: 20),
-                    Text(
-                      'A large shake has been detected from $senderName',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                    Center(
+                      child: Text(
+                        'A large shake has been detected from $senderName. They may be in danger.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ],
@@ -105,16 +137,45 @@ class ContactEmergencyViewPage extends StatelessWidget {
                     SizedBox(height: 20),
                     Center(
                       child: Text(
-                      '$senderName shared pictures of their surroundings and their location. They may be in danger.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w400,
+                        '$senderName shared pictures of their surroundings and their location. They may be in danger.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
                     ),
                   ],
+                  SizedBox(height: 20),
+                  Text(
+                    'User Information',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Color.fromRGBO(226, 192, 68, 1),
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.left,
+                  ),
+                  SizedBox(height: 10),
+                  Container(
+                    padding: EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16.0),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildUserInfoRow('Full Name', senderName),
+                        _buildUserInfoRow('Age', age),
+                        _buildUserInfoRow('Phone Number', phoneNumber),
+                        _buildUserInfoRow('Blood Type', bloodType),
+                        _buildUserInfoRow('Medication', medication),
+                        _buildUserInfoRow('Allergies', allergies),
+                      ],
+                    ),
+                  ),
                   SizedBox(height: 20),
                   Text(
                     'Shared Location',
@@ -173,7 +234,10 @@ class ContactEmergencyViewPage extends StatelessWidget {
                             },
                             child: Container(
                               margin: EdgeInsets.symmetric(horizontal: 5.0),
-                              child: Image.network(imageUrls[index]),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16.0),
+                                child: Image.network(imageUrls[index], fit: BoxFit.cover),
+                              ),
                             ),
                           );
                         },
@@ -188,6 +252,30 @@ class ContactEmergencyViewPage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildUserInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class ImageGalleryPage extends StatelessWidget {
@@ -196,8 +284,36 @@ class ImageGalleryPage extends StatelessWidget {
 
   ImageGalleryPage({required this.imageUrls, required this.initialIndex});
 
-  Future<void> _saveImageToDevice(String imageUrl) async {
-    // Add your implementation to save the image to the device
+  Future<void> _saveImageToDevice(String imageUrl, BuildContext context) async {
+    var status = await Permission.storage.status;
+    if (!status.isGranted) {
+      status = await Permission.storage.request();
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Storage permission not granted')),
+        );
+        return;
+      }
+    }
+
+    try {
+      var response = await Dio().get(imageUrl, options: Options(responseType: ResponseType.bytes));
+      final result = await ImageGallerySaver.saveImage(Uint8List.fromList(response.data));
+      if (result['isSuccess']) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Image saved to gallery')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save image')),
+        );
+      }
+    } catch (e) {
+      print('Error saving image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving image: $e')),
+      );
+    }
   }
 
   @override
@@ -225,9 +341,11 @@ class ImageGalleryPage extends StatelessWidget {
         backgroundDecoration: BoxDecoration(color: Colors.black),
         pageController: PageController(initialPage: initialIndex),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _saveImageToDevice(imageUrls[initialIndex]),
-        child: Icon(Icons.download),
+      floatingActionButton: Builder(
+        builder: (context) => FloatingActionButton(
+          onPressed: () => _saveImageToDevice(imageUrls[initialIndex], context),
+          child: Icon(Icons.download),
+        ),
       ),
     );
   }
