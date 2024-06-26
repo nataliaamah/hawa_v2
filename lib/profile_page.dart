@@ -27,13 +27,17 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void fetchUserData() async {
-    DocumentSnapshot doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.userId)
-        .get();
-    setState(() {
-      userDocument = doc;
-    });
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .get();
+      setState(() {
+        userDocument = doc;
+      });
+    } catch (e) {
+      print('Error fetching user data: $e');
+    }
   }
 
   void _showAuthenticationPopup() {
@@ -111,14 +115,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           SizedBox(height: 10),
                           GestureDetector(
                             onTap: () async {
-                              // Navigate to EditProfilePage and wait for the result
                               await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => EditProfilePage(userId: widget.userId),
                                 ),
                               );
-                              // Reload the user data after returning from EditProfilePage
                               fetchUserData();
                             },
                             child: Center(

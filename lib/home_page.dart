@@ -58,6 +58,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   DateTime? _lastAlertTime;
   bool _canSendAlert = true;
   bool _isProcessingAlert = false;
+  bool _sosPressed = false;
+  bool _alertSent = false;
+  int _countdown = 10;
+  bool _retracted = false;
+  StreamSubscription<DocumentSnapshot>? _retractedSubscription;
 
   static const platform = MethodChannel('com.hawa.application/location');
 
@@ -80,6 +85,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _timer.cancel();
     if (_isAuthenticated) {
       _gyroscopeSubscription.cancel();
+      _retractedSubscription?.cancel();
     }
     _cameraController?.dispose();
     super.dispose();
@@ -373,7 +379,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       'location': GeoPoint(_locationData.latitude!, _locationData.longitude!),
       'timestamp': FieldValue.serverTimestamp(),
       'resolved': false,
-      'isShakeEmergency': true, // Set isShakeEmergency to true
     });
 
     logger.d('Emergency alert initialized with ID: ${docRef.id}');
@@ -404,9 +409,47 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return returnURL;
   }
 
+  // Function to initialize the SOS emergency alert in Firestore
+  Future<String> _initializeSosEmergencyAlert() async {
+    Location location = new Location();
+
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
+    LocationData _locationData;
+
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        throw Exception('Location service not enabled');
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        throw Exception('Location permission not granted');
+      }
+    }
+
+    _locationData = await location.getLocation();
+
+    DocumentReference docRef = await FirebaseFirestore.instance.collection('staff_emergency').add({
+      'userId': widget.userId,
+      'location': GeoPoint(_locationData.latitude!, _locationData.longitude!),
+      'timestamp': FieldValue.serverTimestamp(),
+      'resolved': false,
+      'retracted': false,
+    });
+
+    logger.d('SOS emergency alert initialized with ID: ${docRef.id}');
+    return docRef.id;
+  }
+
   void _startShakeDetection() {
     _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent event) {
-      final double shakeThreshold = 10.0; // Increased value to detect larger shakes
+      final double shakeThreshold = 13.0; // Increased value to detect larger shakes
       final angularVelocity = sqrt(event.x * event.x + event.y * event.y + event.z * event.z); // Calculate the angular velocity magnitude
 
       if (!_isProcessingAlert && !_isSnapping && angularVelocity > shakeThreshold) {
@@ -416,7 +459,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         Vibrate.feedback(FeedbackType.warning); // Haptic feedback on shake detection
         _showShakeDetectionAlert(); // Show alert popup
 
-        _disableGyroscopeFor10Seconds(); // Disable gyroscope for 5 seconds after detecting shake
+        _disableGyroscopeFor10Seconds(); // Disable gyroscope for 10 seconds after detecting shake
       }
     });
   }
@@ -455,13 +498,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _debounceTimer?.cancel();
     _debounceTimer = Timer(Duration(seconds: 10), () {
       _isProcessingAlert = false;
-      _startShakeDetection(); 
+      _startShakeDetection();
     });
   }
 
   void _cancelAlert() {
     _isProcessingAlert = false;
-    _startShakeDetection(); 
+    _startShakeDetection();
   }
 
   void _handleShakeEmergency() {
@@ -503,6 +546,64 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
+  void _handleSosPress() {
+    setState(() {
+      _sosPressed = true;
+      _countdown = 10;
+    });
+    Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        _countdown--;
+      });
+      if (_countdown <= 0) {
+        timer.cancel();
+        setState(() {
+          _alertSent = true;
+        });
+        // Send SOS alert
+        _sendSosAlert();
+      }
+    });
+  }
+
+  void _sendSosAlert() async {
+    try {
+      _currentEmergencyId = await _initializeSosEmergencyAlert();
+      _retractedSubscription = FirebaseFirestore.instance
+          .collection('staff_emergency')
+          .doc(_currentEmergencyId)
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.exists) {
+          setState(() {
+            _retracted = snapshot.data()?['retracted'] ?? false;
+            if (_retracted) {
+              _sosPressed = false;
+              _alertSent = false;
+            }
+          });
+        }
+      });
+      logger.d('SOS alert sent.');
+    } catch (e) {
+      logger.e('Error sending SOS alert: $e');
+    }
+  }
+
+  void _cancelSosAlert() async {
+    if (_currentEmergencyId != null) {
+      await FirebaseFirestore.instance.collection('staff_emergency').doc(_currentEmergencyId).update({
+        'retracted': true,
+      });
+      setState(() {
+        _sosPressed = false;
+        _alertSent = false;
+        _countdown = 10;
+      });
+      logger.d('SOS alert retracted.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String firstName = getFirstName(widget.fullName);
@@ -519,6 +620,27 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           height: 200,
           width: 200,
         ),
+        leading: IconButton(
+          icon: Icon(Icons.menu_rounded, color: Color.fromRGBO(197, 197, 197, 1), size: 40),
+          onPressed: () {
+            Scaffold.of(context).openDrawer();
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromRGBO(197, 197, 197, 1)),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId, isAuthenticated: widget.isAuthenticated)),
+              ).then((value) {
+                setState(() {
+                  // This will refresh the state and update the welcome message
+                });
+              });
+            },
+          ),
+        ],
       ),
       drawer: AppDrawer(isAuthenticated: _isAuthenticated, userId: widget.userId),
       body: Builder(
@@ -527,33 +649,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             CustomPaint(
               size: Size(MediaQuery.of(context).size.width, 250),
               painter: HalfCirclePainter(Color.fromRGBO(2, 1, 34, 1)),
-            ),
-            Row(
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(left: 20),
-                  child: GestureDetector(
-                    onTap: () {
-                      Scaffold.of(context).openDrawer();
-                    },
-                    child: Icon(Icons.menu_rounded, color: Color.fromRGBO(197, 197, 197, 1), size: 40),
-                  ),
-                ),
-                Spacer(),
-                Padding(
-                  padding: EdgeInsets.only(right: 20),
-                  child: IconButton(
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId, isAuthenticated: widget.isAuthenticated))).then((value) {
-                        setState(() {
-                          // This will refresh the state and update the welcome message
-                        });
-                      });
-                    },
-                    icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromRGBO(197, 197, 197, 1)),
-                  ),
-                ),
-              ],
             ),
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -573,26 +668,35 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: () async {
-                        if (!_isAuthenticated) {
-                          await _showLoginRequiredDialog();
-                        } else {
-                          _handleShakeEmergency();
-                        }
-                      },
+                      onPressed: _sosPressed
+                          ? null
+                          : () {
+                              _handleSosPress();
+                            },
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            'S.O.S',
-                            style: GoogleFonts.quicksand(
-                              textStyle: TextStyle(
-                                color: const Color.fromARGB(255, 255, 255, 255),
-                                fontWeight: FontWeight.w900,
-                                fontSize: 55,
-                              ),
-                            ),
-                          ),
+                          _sosPressed
+                              ? Text(
+                                  _alertSent ? "Hold tight." : 'Sending alert in $_countdown',
+                                  style: GoogleFonts.quicksand(
+                                    textStyle: TextStyle(
+                                      color: const Color.fromARGB(255, 255, 255, 255),
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: _alertSent ? 25 : 25,
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  'S.O.S',
+                                  style: GoogleFonts.quicksand(
+                                    textStyle: TextStyle(
+                                      color: const Color.fromARGB(255, 255, 255, 255),
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 55,
+                                    ),
+                                  ),
+                                ),
                         ],
                       ),
                       style: ElevatedButton.styleFrom(
@@ -603,6 +707,20 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     ),
                   ),
                 ),
+                if (_sosPressed)
+                  TextButton(
+                    onPressed: () {
+                      _cancelSosAlert();
+                    },
+                    child: Text(
+                      _alertSent ? 'Retract Alert' : 'Cancel Alert',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 18,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
                 SizedBox(height: 60),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,

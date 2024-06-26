@@ -1,14 +1,12 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:hawa_v1/login_page.dart';
-import 'about_us.dart';
-import 'contact_us.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/services.dart';
-import 'package:hawa_v1/contact_emergency.dart';
+import 'login_page.dart';
+import 'profile_page.dart';
+import 'contact_emergency.dart';
+import 'about_us.dart';
+import 'contact_us.dart';
 import 'home_page.dart';
-
 
 class AppDrawer extends StatelessWidget {
   final bool isAuthenticated;
