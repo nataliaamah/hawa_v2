@@ -92,16 +92,18 @@ class _HawaAppState extends State<HawaApp> {
                 setState(() {
                   _seenOnboard = true;
                 });
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => HomePage(
-                      fullName: fullName ?? 'Guest',
-                      userId: userId ?? '',
-                      isAuthenticated: userId != null,
+                // Ensure navigation happens after the state is set
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => HomePage(
+                        fullName: fullName ?? 'Guest',
+                        userId: userId ?? '',
+                        isAuthenticated: userId != null,
+                      ),
                     ),
-                  ),
-                );
+                  );
+                });
               },
             ),
     );

@@ -302,49 +302,58 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
-  // Function to take multiple pictures
   Future<void> _takePictures() async {
-    if (!_isAuthenticated) {
-      bool contactEntered = await _showEnterEmergencyContactDialog();
-      if (!contactEntered) {
-        return; // User did not enter a contact, do not proceed
-      }
-    }
-
-    try {
-      await _initializeControllerFuture;
-
-      // Initialize the emergency alert entry in Firestore
-      _currentEmergencyId = await _initializeEmergencyAlert();
-
-      _isSnapping = true;
-      _snappedPictures = 0;
-      setState(() {});
-
-      for (int i = 0; i < maxPictures && _isSnapping; i++) {
-        final image = await _cameraController!.takePicture();
-        final directory = await getApplicationDocumentsDirectory();
-        final imagePath = path.join(directory.path, '${DateTime.now()}_$i.png');
-        await image.saveTo(imagePath);
-        logger.d('Picture saved to $imagePath');
-        final imageUrl = await _uploadImageToCloudStorage(imagePath);
-        await _updateEmergencyAlert(imageUrl);
-        logger.d('Image $i uploaded to $imageUrl');
-
-        // Increase haptic feedback intensity
-        Vibrate.feedback(FeedbackType.success);
-        _snappedPictures++;
-        setState(() {});
-
-        await Future.delayed(Duration(milliseconds: 1000)); // Shorter interval between snaps
-      }
-
-      _isSnapping = false;
-      setState(() {});
-    } catch (e) {
-      logger.e('Error taking pictures: $e');
+  if (!_isAuthenticated) {
+    bool contactEntered = await _showEnterEmergencyContactDialog();
+    if (!contactEntered) {
+      return; // User did not enter a contact, do not proceed
     }
   }
+
+  try {
+    await _initializeControllerFuture;
+
+    // Initialize the emergency alert entry in Firestore
+    _currentEmergencyId = await _initializeEmergencyAlert();
+
+    _isSnapping = true;
+    _snappedPictures = 0;
+    if (mounted) setState(() {});
+
+    _showSnappingIndicator(); // Show the snapping indicator dialog
+
+    for (int i = 0; i < maxPictures && _isSnapping; i++) {
+      final image = await _cameraController!.takePicture();
+      final directory = await getApplicationDocumentsDirectory();
+      final imagePath = path.join(directory.path, '${DateTime.now()}_$i.png');
+      await image.saveTo(imagePath);
+      logger.d('Picture saved to $imagePath');
+      final imageUrl = await _uploadImageToCloudStorage(imagePath);
+      await _updateEmergencyAlert(imageUrl);
+      logger.d('Image $i uploaded to $imageUrl');
+
+      // Increase haptic feedback intensity
+      Vibrate.feedback(FeedbackType.success);
+      _snappedPictures++;
+      
+      if (_snappingIndicatorSetState != null && mounted) {
+        _snappingIndicatorSetState!(() {}); // Trigger the setState to update the dialog
+      }
+
+      await Future.delayed(Duration(milliseconds: 300)); // Shorter interval between snaps
+    }
+
+    _isSnapping = false;
+    if (mounted) setState(() {});
+    if (_snappingIndicatorSetState != null && mounted) {
+      _snappingIndicatorSetState!(() {}); // Final update to the dialog
+    }
+  } catch (e) {
+    logger.e('Error taking pictures: $e');
+  }
+}
+
+
 
   // Function to initialize the emergency alert in Firestore
   Future<String> _initializeEmergencyAlert() async {
@@ -441,6 +450,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       'timestamp': FieldValue.serverTimestamp(),
       'resolved': false,
       'retracted': false,
+      'status': 'unresolved',
+      'assignedTo': null,
+      'assignedToName': null,
     });
 
     logger.d('SOS emergency alert initialized with ID: ${docRef.id}');
@@ -512,44 +524,55 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _showSnappingIndicator() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: Colors.black87,
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Snapping pictures... $_snappedPictures/$maxPictures',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _isSnapping = false;
-                      });
-                      Navigator.of(context).pop();
-                    },
-                    child: Text('Stop Snapping'),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+  if (_snappingIndicatorSetState != null) return; // Prevent showing the dialog multiple times
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          // Store the setState in a variable so it can be called from outside
+          _snappingIndicatorSetState = setState;
+          return AlertDialog(
+            backgroundColor: Colors.black87,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Snapping pictures... $_snappedPictures/$maxPictures',
+                  style: TextStyle(color: Colors.white),
+                ),
+                SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _isSnapping = false;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Stop Snapping'),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  ).then((_) {
+    _snappingIndicatorSetState = null; // Clear the stored setState when dialog is dismissed
+  });
+}
+
+StateSetter? _snappingIndicatorSetState;
+
+
+
 
   void _handleSosPress() {
     setState(() {
       _sosPressed = true;
-      _countdown = 10;
+      _countdown = 5;
     });
     Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
@@ -598,7 +621,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       setState(() {
         _sosPressed = false;
         _alertSent = false;
-        _countdown = 10;
+        _countdown = 5;
       });
       logger.d('SOS alert retracted.');
     }
@@ -620,12 +643,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           height: 200,
           width: 200,
         ),
-        leading: IconButton(
+        leading: Builder(
+        builder: (context) => IconButton(
           icon: Icon(Icons.menu_rounded, color: Color.fromRGBO(197, 197, 197, 1), size: 40),
           onPressed: () {
             Scaffold.of(context).openDrawer();
           },
         ),
+      ),
         actions: [
           IconButton(
             icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromRGBO(197, 197, 197, 1)),
@@ -683,9 +708,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                     textStyle: TextStyle(
                                       color: const Color.fromARGB(255, 255, 255, 255),
                                       fontWeight: FontWeight.w900,
-                                      fontSize: _alertSent ? 25 : 25,
+                                      fontSize: _alertSent ? 25 : 20,
                                     ),
                                   ),
+                                  textAlign: TextAlign.center,
                                 )
                               : Text(
                                   'S.O.S',
