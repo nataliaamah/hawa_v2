@@ -303,99 +303,102 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _takePictures() async {
-  if (!_isAuthenticated) {
-    bool contactEntered = await _showEnterEmergencyContactDialog();
-    if (!contactEntered) {
-      return; // User did not enter a contact, do not proceed
+    if (!_isAuthenticated) {
+      bool contactEntered = await _showEnterEmergencyContactDialog();
+      if (!contactEntered) {
+        return; // User did not enter a contact, do not proceed
+      }
     }
-  }
 
-  try {
-    await _initializeControllerFuture;
+    try {
+      await _initializeControllerFuture;
 
-    // Initialize the emergency alert entry in Firestore
-    _currentEmergencyId = await _initializeEmergencyAlert();
+      // Initialize the emergency alert entry in Firestore
+      _currentEmergencyId = await _initializeEmergencyAlert(isGyroscope: false);
 
-    _isSnapping = true;
-    _snappedPictures = 0;
-    if (mounted) setState(() {}); // Ensure the UI updates immediately
+      _isSnapping = true;
+      _snappedPictures = 0;
+      if (mounted) setState(() {}); // Ensure the UI updates immediately
 
-    // Show the snapping indicator dialog once
-    _showSnappingIndicator();
+      // Show the snapping indicator dialog once
+      _showSnappingIndicator();
 
-    for (int i = 0; i < maxPictures && _isSnapping; i++) {
-      final image = await _cameraController!.takePicture();
-      final directory = await getApplicationDocumentsDirectory();
-      final imagePath = path.join(directory.path, '${DateTime.now()}_$i.png');
-      await image.saveTo(imagePath);
-      logger.d('Picture saved to $imagePath');
-      final imageUrl = await _uploadImageToCloudStorage(imagePath);
-      await _updateEmergencyAlert(imageUrl);
-      logger.d('Image $i uploaded to $imageUrl');
+      for (int i = 0; i < maxPictures && _isSnapping; i++) {
+        final image = await _cameraController!.takePicture();
+        final directory = await getApplicationDocumentsDirectory();
+        final imagePath = path.join(directory.path, '${DateTime.now()}_$i.png');
+        await image.saveTo(imagePath);
+        logger.d('Picture saved to $imagePath');
+        final imageUrl = await _uploadImageToCloudStorage(imagePath);
+        await _updateEmergencyAlert(imageUrl);
+        logger.d('Image $i uploaded to $imageUrl');
 
-      // Increase haptic feedback intensity
-      Vibrate.feedback(FeedbackType.success);
-      _snappedPictures++;
+        // Increase haptic feedback intensity
+        Vibrate.feedback(FeedbackType.success);
+        _snappedPictures++;
 
+        if (_snappingIndicatorSetState != null && mounted) {
+          _snappingIndicatorSetState!(() {}); // Trigger the setState to update the dialog
+        }
+
+        await Future.delayed(Duration(milliseconds: 1000)); // Shorter interval between snaps
+      }
+
+      _isSnapping = false;
+      if (mounted) setState(() {});
       if (_snappingIndicatorSetState != null && mounted) {
-        _snappingIndicatorSetState!(() {}); // Trigger the setState to update the dialog
+        _snappingIndicatorSetState!(() {}); // Final update to the dialog
       }
-
-      await Future.delayed(Duration(milliseconds: 1000)); // Shorter interval between snaps
+    } catch (e) {
+      logger.e('Error taking pictures: $e');
+    } finally {
+      _snappingIndicatorSetState = null; // Reset state after the loop completes
     }
-
-    _isSnapping = false;
-    if (mounted) setState(() {});
-    if (_snappingIndicatorSetState != null && mounted) {
-      _snappingIndicatorSetState!(() {}); // Final update to the dialog
-    }
-  } catch (e) {
-    logger.e('Error taking pictures: $e');
-  } finally {
-    _snappingIndicatorSetState = null; // Reset state after the loop completes
   }
-}
 
+  // Common function to initialize the emergency alert in Firestore
+  Future<String> _initializeEmergencyAlert({required bool isGyroscope, List<String> imageUrls = const []}) async {
+  Location location = new Location();
 
+  bool _serviceEnabled;
+  PermissionStatus _permissionGranted;
+  LocationData _locationData;
 
-  // Function to initialize the emergency alert in Firestore
-  Future<String> _initializeEmergencyAlert() async {
-    Location location = new Location();
-
-    bool _serviceEnabled;
-    PermissionStatus _permissionGranted;
-    LocationData _locationData;
-
-    _serviceEnabled = await location.serviceEnabled();
+  _serviceEnabled = await location.serviceEnabled();
+  if (!_serviceEnabled) {
+    _serviceEnabled = await location.requestService();
     if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
-        throw Exception('Location service not enabled');
-      }
+      throw Exception('Location service not enabled');
     }
-
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
-        throw Exception('Location permission not granted');
-      }
-    }
-
-    _locationData = await location.getLocation();
-
-    DocumentReference docRef = await FirebaseFirestore.instance.collection('contact_emergency').add({
-      'userId': widget.userId,
-      'emergencyNumber': _emergencyNumber,
-      'imageUrls': [],
-      'location': GeoPoint(_locationData.latitude!, _locationData.longitude!),
-      'timestamp': FieldValue.serverTimestamp(),
-      'resolved': false,
-    });
-
-    logger.d('Emergency alert initialized with ID: ${docRef.id}');
-    return docRef.id;
   }
+
+  _permissionGranted = await location.hasPermission();
+  if (_permissionGranted == PermissionStatus.denied) {
+    _permissionGranted = await location.requestPermission();
+    if (_permissionGranted != PermissionStatus.granted) {
+      throw Exception('Location permission not granted');
+    }
+  }
+
+  _locationData = await location.getLocation();
+
+  DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
+  String userName = userDoc.exists ? userDoc['fullName'] : 'Unknown User';
+
+  DocumentReference docRef = await FirebaseFirestore.instance.collection('contact_emergency').add({
+    'userId': widget.userId,
+    'emergencyNumber': _emergencyNumber,
+    'imageUrls': imageUrls,
+    'timestamp': FieldValue.serverTimestamp(),
+    'resolved': false,
+    'isShakeEmergency': isGyroscope,
+    'location': GeoPoint(_locationData.latitude!, _locationData.longitude!), // Added location
+    'userName': userName, // Added userName
+  });
+
+  logger.d('Emergency alert initialized with ID: ${docRef.id}');
+  return docRef.id;
+}
 
   // Function to update the emergency alert with new image URL
   Future<void> _updateEmergencyAlert(String imageUrl) async {
@@ -463,135 +466,136 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _startShakeDetection() {
-    _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent event) {
-      final double shakeThreshold = 13.0; // Increased value to detect larger shakes
-      final angularVelocity = sqrt(event.x * event.x + event.y * event.y + event.z * event.z); // Calculate the angular velocity magnitude
+  _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent event) {
+    final double shakeThreshold = 13.0; // Increased value to detect larger shakes
+    final angularVelocity = sqrt(event.x * event.x + event.y * event.y + event.z * event.z); // Calculate the angular velocity magnitude
 
-      if (!_isProcessingAlert && !_isSnapping && angularVelocity > shakeThreshold) {
-        _isProcessingAlert = true;
-        _handleShakeEmergency();
-
-        Vibrate.feedback(FeedbackType.warning); // Haptic feedback on shake detection
-        _showShakeDetectionAlert(); // Show alert popup
-
-        _disableGyroscopeFor10Seconds(); // Disable gyroscope for 10 seconds after detecting shake
-      }
-    });
-  }
-
-  void _showShakeDetectionAlert() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Shake Detected'),
-          content: Text('Unusual movement detected. Emergency alert sent to contact.'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancel Alert'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _cancelAlert();
-              },
-            ),
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _disableGyroscopeFor10Seconds() {
-    // Stop listening to the gyroscope events
-    _gyroscopeSubscription.cancel();
-
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(Duration(seconds: 10), () {
-      _isProcessingAlert = false;
-      _startShakeDetection();
-    });
-  }
-
-  void _cancelAlert() {
-    _isProcessingAlert = false;
-    _startShakeDetection();
-  }
-
-  void _handleShakeEmergency() {
-    print('Shake emergency detected and alert sent.');
-  }
-
-  void _showSnappingIndicator() {
-  if (_snappingIndicatorSetState != null) return; // Prevent showing the dialog multiple times
-
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (BuildContext context, StateSetter setState) {
-          // Store the setState in a variable so it can be called from outside
-          _snappingIndicatorSetState = setState;
-          return AlertDialog(
-            backgroundColor: Colors.black87,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Snapping pictures... $_snappedPictures/$maxPictures',
-                  style: TextStyle(color: Colors.white),
-                ),
-                SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    if (mounted) {
-                      setState(() {
-                        _isSnapping = false;
-                      });
-                    }
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('Stop Snapping'),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  ).then((_) {
-    _snappingIndicatorSetState = null; // Clear the stored setState when dialog is dismissed
+    if (!_isProcessingAlert && !_isSnapping && angularVelocity > shakeThreshold) {
+      _isProcessingAlert = true;
+      _handleShakeEmergency();
+    }
   });
 }
 
-StateSetter? _snappingIndicatorSetState;
+void _showShakeDetectionAlert(BuildContext context) async {
+  final result = await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Shake Detected'),
+        content: Text('Unusual movement detected. Do you want to send an emergency alert?'),
+        actions: <Widget>[
+          TextButton(
+            child: Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop(false);
+              _cancelAlert();
+            },
+          ),
+          TextButton(
+            child: Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop(true);
+            },
+          ),
+        ],
+      );
+    },
+  );
+
+  if (result == true) {
+    await _initializeEmergencyAlert(isGyroscope: true);
+    Vibrate.feedback(FeedbackType.warning); // Haptic feedback on shake detection
+  }
+
+  _isProcessingAlert = false;
+}
+
+void _handleShakeEmergency() {
+  _showShakeDetectionAlert(context); // Show alert popup and wait for user response
+}
+
+void _disableGyroscopeFor30Seconds() {
+  // Stop listening to the gyroscope events
+  _gyroscopeSubscription.cancel();
+
+  _debounceTimer?.cancel();
+  _debounceTimer = Timer(Duration(seconds: 30), () {
+    _isProcessingAlert = false;
+    _startShakeDetection();
+  });
+}
+
+void _cancelAlert() {
+  _isProcessingAlert = false;
+  _startShakeDetection();
+}
 
 
+  void _showSnappingIndicator() {
+    if (_snappingIndicatorSetState != null) return; // Prevent showing the dialog multiple times
 
-  void _handleSosPress() {
-    setState(() {
-      _sosPressed = true;
-      _countdown = 5;
-    });
-    Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        _countdown--;
-      });
-      if (_countdown <= 0) {
-        timer.cancel();
-        setState(() {
-          _alertSent = true;
-        });
-        // Send SOS alert
-        _sendSosAlert();
-      }
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            // Store the setState in a variable so it can be called from outside
+            _snappingIndicatorSetState = setState;
+            return AlertDialog(
+              backgroundColor: Colors.black87,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Snapping pictures... $_snappedPictures/$maxPictures',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (mounted) {
+                        setState(() {
+                          _isSnapping = false;
+                        });
+                      }
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('Stop Snapping'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    ).then((_) {
+      _snappingIndicatorSetState = null; // Clear the stored setState when dialog is dismissed
     });
   }
+
+  StateSetter? _snappingIndicatorSetState;
+
+  void _handleSosPress() {
+  setState(() {
+    _sosPressed = true;
+    _countdown = 5;
+  });
+  Timer.periodic(Duration(seconds: 1), (timer) {
+    setState(() {
+      _countdown--;
+    });
+    if (_countdown <= 0) {
+      timer.cancel();
+      setState(() {
+        _alertSent = true;
+      });
+      // Send SOS alert
+      _sendSosAlert();
+    }
+  });
+}
 
   void _sendSosAlert() async {
     try {
@@ -648,13 +652,13 @@ StateSetter? _snappingIndicatorSetState;
           width: 200,
         ),
         leading: Builder(
-        builder: (context) => IconButton(
-          icon: Icon(Icons.menu_rounded, color: Color.fromRGBO(197, 197, 197, 1), size: 40),
-          onPressed: () {
-            Scaffold.of(context).openDrawer();
-          },
+          builder: (context) => IconButton(
+            icon: Icon(Icons.menu_rounded, color: Color.fromRGBO(197, 197, 197, 1), size: 40),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
+          ),
         ),
-      ),
         actions: [
           IconButton(
             icon: Icon(Icons.account_circle_rounded, size: 40, color: Color.fromRGBO(197, 197, 197, 1)),
