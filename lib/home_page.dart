@@ -318,9 +318,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     _isSnapping = true;
     _snappedPictures = 0;
-    if (mounted) setState(() {});
+    if (mounted) setState(() {}); // Ensure the UI updates immediately
 
-    _showSnappingIndicator(); // Show the snapping indicator dialog
+    // Show the snapping indicator dialog once
+    _showSnappingIndicator();
 
     for (int i = 0; i < maxPictures && _isSnapping; i++) {
       final image = await _cameraController!.takePicture();
@@ -335,12 +336,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       // Increase haptic feedback intensity
       Vibrate.feedback(FeedbackType.success);
       _snappedPictures++;
-      
+
       if (_snappingIndicatorSetState != null && mounted) {
         _snappingIndicatorSetState!(() {}); // Trigger the setState to update the dialog
       }
 
-      await Future.delayed(Duration(milliseconds: 300)); // Shorter interval between snaps
+      await Future.delayed(Duration(milliseconds: 1000)); // Shorter interval between snaps
     }
 
     _isSnapping = false;
@@ -350,6 +351,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   } catch (e) {
     logger.e('Error taking pictures: $e');
+  } finally {
+    _snappingIndicatorSetState = null; // Reset state after the loop completes
   }
 }
 
@@ -546,9 +549,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: () {
-                    setState(() {
-                      _isSnapping = false;
-                    });
+                    if (mounted) {
+                      setState(() {
+                        _isSnapping = false;
+                      });
+                    }
                     Navigator.of(context).pop();
                   },
                   child: Text('Stop Snapping'),
@@ -565,7 +570,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 }
 
 StateSetter? _snappingIndicatorSetState;
-
 
 
 
