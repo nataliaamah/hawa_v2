@@ -192,6 +192,40 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     await _popupCompleter!.future;
   }
 
+  Future<void> _showTestingMessage() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must tap button
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Testing Mode'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('This action is for testing purposes only.'),
+                Text('No actual emergency contact will be notified.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'OK',
+                style: TextStyle(
+                  color: Colors.blue,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<bool> _showEnterEmergencyContactDialog() async {
     TextEditingController emergencyContactController = TextEditingController();
 
@@ -304,17 +338,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _takePictures() async {
     if (!_isAuthenticated) {
-      bool contactEntered = await _showEnterEmergencyContactDialog();
-      if (!contactEntered) {
-        return; // User did not enter a contact, do not proceed
-      }
+      await _showTestingMessage();
     }
 
     try {
       await _initializeControllerFuture;
 
-      // Initialize the emergency alert entry in Firestore
-      _currentEmergencyId = await _initializeEmergencyAlert(isGyroscope: false);
+      if (_isAuthenticated) {
+        // Initialize the emergency alert entry in Firestore
+        _currentEmergencyId = await _initializeEmergencyAlert(isGyroscope: false);
+      }
 
       _isSnapping = true;
       _snappedPictures = 0;
@@ -329,9 +362,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         final imagePath = path.join(directory.path, '${DateTime.now()}_$i.png');
         await image.saveTo(imagePath);
         logger.d('Picture saved to $imagePath');
-        final imageUrl = await _uploadImageToCloudStorage(imagePath);
-        await _updateEmergencyAlert(imageUrl);
-        logger.d('Image $i uploaded to $imageUrl');
+
+        if (_isAuthenticated) {
+          final imageUrl = await _uploadImageToCloudStorage(imagePath);
+          await _updateEmergencyAlert(imageUrl);
+          logger.d('Image $i uploaded to $imageUrl');
+        }
 
         // Increase haptic feedback intensity
         Vibrate.feedback(FeedbackType.success);
@@ -341,7 +377,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           _snappingIndicatorSetState!(() {}); // Trigger the setState to update the dialog
         }
 
-        await Future.delayed(Duration(milliseconds: 1000)); // Shorter interval between snaps
+        await Future.delayed(Duration(milliseconds: 300)); // Short interval between snaps
       }
 
       _isSnapping = false;
@@ -356,52 +392,62 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
-  // Common function to initialize the emergency alert in Firestore
   Future<String> _initializeEmergencyAlert({required bool isGyroscope, List<String> imageUrls = const []}) async {
-  Location location = new Location();
+    if (!_isAuthenticated) {
+      logger.d('Testing mode: Initializing emergency alert');
+      // In testing mode, simply return a dummy emergency ID
+      return Future.value('dummy_emergency_id');
+    }
 
-  bool _serviceEnabled;
-  PermissionStatus _permissionGranted;
-  LocationData _locationData;
+    Location location = new Location();
 
-  _serviceEnabled = await location.serviceEnabled();
-  if (!_serviceEnabled) {
-    _serviceEnabled = await location.requestService();
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
+    LocationData _locationData;
+
+    _serviceEnabled = await location.serviceEnabled();
     if (!_serviceEnabled) {
-      throw Exception('Location service not enabled');
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        throw Exception('Location service not enabled');
+      }
     }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        throw Exception('Location permission not granted');
+      }
+    }
+
+    _locationData = await location.getLocation();
+
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
+    String userName = userDoc.exists ? userDoc['fullName'] : 'Unknown User';
+
+    DocumentReference docRef = await FirebaseFirestore.instance.collection('contact_emergency').add({
+      'userId': widget.userId,
+      'emergencyNumber': _emergencyNumber,
+      'imageUrls': imageUrls,
+      'timestamp': FieldValue.serverTimestamp(),
+      'resolved': false,
+      'isShakeEmergency': isGyroscope,
+      'location': GeoPoint(_locationData.latitude!, _locationData.longitude!), // Added location
+      'userName': userName, // Added userName
+    });
+
+    logger.d('Emergency alert initialized with ID: ${docRef.id}');
+    return docRef.id;
   }
 
-  _permissionGranted = await location.hasPermission();
-  if (_permissionGranted == PermissionStatus.denied) {
-    _permissionGranted = await location.requestPermission();
-    if (_permissionGranted != PermissionStatus.granted) {
-      throw Exception('Location permission not granted');
-    }
-  }
-
-  _locationData = await location.getLocation();
-
-  DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
-  String userName = userDoc.exists ? userDoc['fullName'] : 'Unknown User';
-
-  DocumentReference docRef = await FirebaseFirestore.instance.collection('contact_emergency').add({
-    'userId': widget.userId,
-    'emergencyNumber': _emergencyNumber,
-    'imageUrls': imageUrls,
-    'timestamp': FieldValue.serverTimestamp(),
-    'resolved': false,
-    'isShakeEmergency': isGyroscope,
-    'location': GeoPoint(_locationData.latitude!, _locationData.longitude!), // Added location
-    'userName': userName, // Added userName
-  });
-
-  logger.d('Emergency alert initialized with ID: ${docRef.id}');
-  return docRef.id;
-}
-
-  // Function to update the emergency alert with new image URL
   Future<void> _updateEmergencyAlert(String imageUrl) async {
+    if (!_isAuthenticated) {
+      logger.d('Testing mode: Updating emergency alert with image URL: $imageUrl');
+      // In testing mode, this function does not update any actual data
+      return;
+    }
+
     if (_currentEmergencyId != null) {
       await FirebaseFirestore.instance.collection('contact_emergency').doc(_currentEmergencyId).update({
         'imageUrls': FieldValue.arrayUnion([imageUrl]),
@@ -413,8 +459,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
-  // Function to upload image to cloud storage
   Future<String> _uploadImageToCloudStorage(String imagePath) async {
+    if (!_isAuthenticated) {
+      logger.d('Testing mode: Uploading image to cloud storage: $imagePath');
+      // In testing mode, return a dummy URL
+      return Future.value('https://dummyurl.com/image.png');
+    }
+
     File file = File(imagePath);
     String fileName = path.basename(file.path);
     Reference storageReference = FirebaseStorage.instance.ref().child('images/$fileName');
@@ -424,8 +475,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return returnURL;
   }
 
-  // Function to initialize the SOS emergency alert in Firestore
   Future<String> _initializeSosEmergencyAlert() async {
+    if (!_isAuthenticated) {
+      logger.d('Testing mode: Initializing SOS emergency alert');
+      // In testing mode, simply return a dummy SOS emergency ID
+      return Future.value('dummy_sos_emergency_id');
+    }
+
     Location location = new Location();
 
     bool _serviceEnabled;
@@ -466,71 +522,70 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _startShakeDetection() {
-  _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent event) {
-    final double shakeThreshold = 13.0; // Increased value to detect larger shakes
-    final angularVelocity = sqrt(event.x * event.x + event.y * event.y + event.z * event.z); // Calculate the angular velocity magnitude
+    _gyroscopeSubscription = gyroscopeEvents.listen((GyroscopeEvent event) {
+      final double shakeThreshold = 13.0; // Increased value to detect larger shakes
+      final angularVelocity = sqrt(event.x * event.x + event.y * event.y + event.z * event.z); // Calculate the angular velocity magnitude
 
-    if (!_isProcessingAlert && !_isSnapping && angularVelocity > shakeThreshold) {
-      _isProcessingAlert = true;
-      _handleShakeEmergency();
-    }
-  });
-}
-
-void _showShakeDetectionAlert(BuildContext context) async {
-  final result = await showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Shake Detected'),
-        content: Text('Unusual movement detected. Do you want to send an emergency alert?'),
-        actions: <Widget>[
-          TextButton(
-            child: Text('Cancel'),
-            onPressed: () {
-              Navigator.of(context).pop(false);
-              _cancelAlert();
-            },
-          ),
-          TextButton(
-            child: Text('OK'),
-            onPressed: () {
-              Navigator.of(context).pop(true);
-            },
-          ),
-        ],
-      );
-    },
-  );
-
-  if (result == true) {
-    await _initializeEmergencyAlert(isGyroscope: true);
-    Vibrate.feedback(FeedbackType.warning); // Haptic feedback on shake detection
+      if (!_isProcessingAlert && !_isSnapping && angularVelocity > shakeThreshold) {
+        _isProcessingAlert = true;
+        _handleShakeEmergency();
+      }
+    });
   }
 
-  _isProcessingAlert = false;
-}
+  void _showShakeDetectionAlert(BuildContext context) async {
+    final result = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Shake Detected'),
+          content: Text('Unusual movement detected. Do you want to send an emergency alert?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                _cancelAlert();
+              },
+            ),
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
 
-void _handleShakeEmergency() {
-  _showShakeDetectionAlert(context); // Show alert popup and wait for user response
-}
+    if (result == true) {
+      await _initializeEmergencyAlert(isGyroscope: true);
+      Vibrate.feedback(FeedbackType.warning); // Haptic feedback on shake detection
+    }
 
-void _disableGyroscopeFor30Seconds() {
-  // Stop listening to the gyroscope events
-  _gyroscopeSubscription.cancel();
+    _isProcessingAlert = false;
+  }
 
-  _debounceTimer?.cancel();
-  _debounceTimer = Timer(Duration(seconds: 30), () {
+  void _handleShakeEmergency() {
+    _showShakeDetectionAlert(context); // Show alert popup and wait for user response
+  }
+
+  void _disableGyroscopeFor30Seconds() {
+    // Stop listening to the gyroscope events
+    _gyroscopeSubscription.cancel();
+
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(Duration(seconds: 30), () {
+      _isProcessingAlert = false;
+      _startShakeDetection();
+    });
+  }
+
+  void _cancelAlert() {
     _isProcessingAlert = false;
     _startShakeDetection();
-  });
-}
-
-void _cancelAlert() {
-  _isProcessingAlert = false;
-  _startShakeDetection();
-}
-
+  }
 
   void _showSnappingIndicator() {
     if (_snappingIndicatorSetState != null) return; // Prevent showing the dialog multiple times
@@ -578,24 +633,28 @@ void _cancelAlert() {
   StateSetter? _snappingIndicatorSetState;
 
   void _handleSosPress() {
-  setState(() {
-    _sosPressed = true;
-    _countdown = 5;
-  });
-  Timer.periodic(Duration(seconds: 1), (timer) {
-    setState(() {
-      _countdown--;
-    });
-    if (_countdown <= 0) {
-      timer.cancel();
+    if (!_isAuthenticated) {
+      _showTestingMessage();
+    } else {
       setState(() {
-        _alertSent = true;
+        _sosPressed = true;
+        _countdown = 5;
       });
-      // Send SOS alert
-      _sendSosAlert();
+      Timer.periodic(Duration(seconds: 1), (timer) {
+        setState(() {
+          _countdown--;
+        });
+        if (_countdown <= 0) {
+          timer.cancel();
+          setState(() {
+            _alertSent = true;
+          });
+          // Send SOS alert
+          _sendSosAlert();
+        }
+      });
     }
-  });
-}
+  }
 
   void _sendSosAlert() async {
     try {
@@ -819,8 +878,12 @@ void _cancelAlert() {
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            _showSnappingIndicator();
-                            _takePictures();
+                            if (!_isAuthenticated) {
+                              _showTestingMessage();
+                            } else {
+                              _showSnappingIndicator();
+                              _takePictures();
+                            }
                           },
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,

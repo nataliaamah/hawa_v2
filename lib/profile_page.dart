@@ -14,30 +14,16 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  DocumentSnapshot? userDocument;
-
   @override
   void initState() {
     super.initState();
     if (!widget.isAuthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _showAuthenticationPopup());
-    } else {
-      fetchUserData();
     }
   }
 
-  void fetchUserData() async {
-    try {
-      DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .get();
-      setState(() {
-        userDocument = doc;
-      });
-    } catch (e) {
-      print('Error fetching user data: $e');
-    }
+  Future<DocumentSnapshot> fetchUserData() async {
+    return await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
   }
 
   void _showAuthenticationPopup() {
@@ -85,9 +71,22 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: !widget.isAuthenticated
           ? Center(child: Text(''))
-          : userDocument == null
-              ? Center(child: CircularProgressIndicator())
-              : Stack(
+          : FutureBuilder<DocumentSnapshot>(
+              future: fetchUserData(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (!snapshot.hasData || !snapshot.data!.exists) {
+                  return Center(child: Text('No data found'));
+                }
+
+                var userDocument = snapshot.data!.data() as Map<String, dynamic>;
+
+                return Stack(
                   children: [
                     SingleChildScrollView(
                       child: Column(
@@ -104,7 +103,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           SizedBox(height: 20),
                           Center(
                             child: Text(
-                              (userDocument!.data() as Map<String, dynamic>)['fullName'] ?? 'none',
+                              userDocument['fullName'] ?? 'none',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -121,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   builder: (context) => EditProfilePage(userId: widget.userId),
                                 ),
                               );
-                              fetchUserData();
+                              setState(() {}); // Trigger a rebuild to refresh the data
                             },
                             child: Center(
                               child: Text(
@@ -155,14 +154,14 @@ class _ProfilePageState extends State<ProfilePage> {
                                       ),
                                     ),
                                     SizedBox(height: 10),
-                                    _buildInfoRow('Full Name', (userDocument!.data() as Map<String, dynamic>)['fullName']),
-                                    _buildInfoRow('Date of Birth', (userDocument!.data() as Map<String, dynamic>)['dateOfBirth']),
-                                    _buildInfoRow('Phone Number', (userDocument!.data() as Map<String, dynamic>)['phoneNumber']),
-                                    _buildInfoRow('Blood Type', (userDocument!.data() as Map<String, dynamic>)['bloodType']),
-                                    _buildInfoRow('Allergies', (userDocument!.data() as Map<String, dynamic>)['allergies']),
-                                    _buildInfoRow('Current Medication', (userDocument!.data() as Map<String, dynamic>)['currentMedication']),
-                                    _buildInfoRow('Emergency Contact Name', (userDocument!.data() as Map<String, dynamic>)['contactName']),
-                                    _buildInfoRow('Emergency Contact Number', (userDocument!.data() as Map<String, dynamic>)['contactNumber']),
+                                    _buildInfoRow('Full Name', userDocument['fullName']),
+                                    _buildInfoRow('Date of Birth', userDocument['dateOfBirth']),
+                                    _buildInfoRow('Phone Number', userDocument['phoneNumber']),
+                                    _buildInfoRow('Blood Type', userDocument['bloodType']),
+                                    _buildInfoRow('Allergies', userDocument['allergies']),
+                                    _buildInfoRow('Current Medication', userDocument['currentMedication']),
+                                    _buildInfoRow('Emergency Contact Name', userDocument['contactName']),
+                                    _buildInfoRow('Emergency Contact Number', userDocument['contactNumber']),
                                   ],
                                 ),
                               ),
@@ -172,7 +171,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                   ],
-                ),
+                );
+              },
+            ),
     );
   }
 
